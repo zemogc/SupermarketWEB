@@ -20,3 +20,6 @@ html {
 body {
   margin-bottom: 60px;
 }
+.confirm-card {
+  max-width: 36rem;
+}

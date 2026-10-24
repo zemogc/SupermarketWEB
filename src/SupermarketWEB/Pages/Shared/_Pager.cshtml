@@ -1,0 +1,36 @@
+@*
+    Paginador genérico. Conserva los parámetros actuales de la consulta y solo cambia "pageNumber".
+*@
+@model (int PageNumber, int TotalPages, int TotalCount)
+
+@{
+    string PageUrl(int page)
+    {
+        var query = Context.Request.Query
+            .Where(q => !string.Equals(q.Key, "pageNumber", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(q => q.Key, q => q.Value.ToString());
+        query["pageNumber"] = page.ToString();
+        return Context.Request.Path + QueryString.Create(query!).ToUriComponent();
+    }
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Paginación" class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount registros · página @Model.PageNumber de @Model.TotalPages</span>
+        <ul class="pagination mb-0">
+            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : null)">
+                <a class="page-link" href="@PageUrl(Model.PageNumber - 1)">Anterior</a>
+            </li>
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : null)">
+                    <a class="page-link" href="@PageUrl(i)">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : null)">
+                <a class="page-link" href="@PageUrl(Model.PageNumber + 1)">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}
