@@ -1,0 +1,35 @@
+@model SupermarketWEB.Models.Supplier
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row">
+    <div class="col-sm-8 mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" autofocus />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="col-sm-4 mb-3">
+        <label asp-for="TaxId" class="form-label"></label>
+        <input asp-for="TaxId" class="form-control" />
+        <span asp-validation-for="TaxId" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="ContactName" class="form-label"></label>
+    <input asp-for="ContactName" class="form-control" />
+    <span asp-validation-for="ContactName" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-sm-6 mb-3">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+    <div class="col-sm-6 mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+</div>

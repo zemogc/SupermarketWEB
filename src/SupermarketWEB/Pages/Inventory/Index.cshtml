@@ -75,7 +75,17 @@ else
                             }
                             else
                             {
-                                @movement.Note
+                                <span>@movement.Note</span>
+                                @if (movement.SupplierName is not null || movement.UnitCost is not null)
+                                {
+                                    <div class="small text-muted">
+                                        @movement.SupplierName
+                                        @if (movement.UnitCost is { } cost)
+                                        {
+                                            <span>@(movement.SupplierName is null ? null : "· ")costo @DisplayFormat.Currency(cost) c/u</span>
+                                        }
+                                    </div>
+                                }
                             }
                         </td>
                         <td>@(movement.UserName ?? "Sistema")</td>

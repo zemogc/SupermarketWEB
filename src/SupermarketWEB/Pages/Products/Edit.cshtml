@@ -18,7 +18,13 @@
         <div class="card">
             <div class="card-body">
                 <div class="text-muted small">Stock actual</div>
-                <div class="fs-2 fw-semibold mb-3">@DisplayFormat.Number(Model.CurrentStock)</div>
+                <div class="fs-2 fw-semibold mb-2">@DisplayFormat.Number(Model.CurrentStock)</div>
+                <dl class="row small mb-3">
+                    <dt class="col-6 fw-normal text-muted">Costo promedio</dt>
+                    <dd class="col-6 text-end mb-1">@(Model.AverageCost is { } cost ? DisplayFormat.Currency(cost) : "Sin registrar")</dd>
+                    <dt class="col-6 fw-normal text-muted">Margen</dt>
+                    <dd class="col-6 text-end mb-0 @(Model.Margin < 0 ? "text-danger fw-semibold" : null)">@DisplayFormat.Percent(Model.Margin)</dd>
+                </dl>
                 <p class="small text-muted">El stock cambia solo con movimientos registrados, para conservar el historial.</p>
                 <div class="d-grid gap-2">
                     <a asp-page="/Inventory/Receive" asp-route-productId="@Model.Product.Id" class="btn btn-outline-success btn-sm">Registrar entrada</a>

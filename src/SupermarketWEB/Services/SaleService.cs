@@ -97,6 +97,7 @@ public class SaleService(SupermarketContext context, InventoryService inventory,
                 ProductId = l.ProductId,
                 ProductName = products[l.ProductId].Name,
                 UnitPrice = products[l.ProductId].Price,
+                UnitCost = products[l.ProductId].AverageCost,
                 Quantity = l.Quantity,
             }).ToList(),
         };

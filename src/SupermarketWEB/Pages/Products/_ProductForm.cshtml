@@ -33,5 +33,11 @@
             <input asp-for="Stock" type="number" step="1" min="0" class="form-control" />
             <span asp-validation-for="Stock" class="text-danger"></span>
         </div>
+        <div class="col-sm-6 mb-3">
+            <label asp-for="AverageCost" class="form-label">Costo unitario inicial</label>
+            <input asp-for="AverageCost" type="number" step="0.01" min="0.01" class="form-control" />
+            <span asp-validation-for="AverageCost" class="text-danger"></span>
+            <div class="form-text">Opcional. Permite calcular la utilidad desde la primera venta.</div>
+        </div>
     }
 </div>

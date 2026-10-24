@@ -20,7 +20,15 @@ public class SaleItem
 
     public decimal UnitPrice { get; set; }
 
+    /// <summary>
+    /// Costo promedio del producto al momento de vender, para calcular la utilidad histórica.
+    /// Nulo si el producto no tenía costo registrado.
+    /// </summary>
+    public decimal? UnitCost { get; set; }
+
     public int Quantity { get; set; }
 
     public decimal Subtotal => UnitPrice * Quantity;
+
+    public decimal? Profit => UnitCost is { } cost ? (UnitPrice - cost) * Quantity : null;
 }

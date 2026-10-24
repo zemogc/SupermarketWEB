@@ -30,6 +30,7 @@ public class CreateModel(SupermarketContext context, InventoryService inventory)
             var initial = inventory.CreateMovement(
                 product.Id, StockMovementType.Initial, product.Stock, product.Stock, User.GetUserId(), "Stock inicial");
             initial.Product = product;
+            initial.UnitCost = product.AverageCost;
             Context.StockMovements.Add(initial);
         }
 
