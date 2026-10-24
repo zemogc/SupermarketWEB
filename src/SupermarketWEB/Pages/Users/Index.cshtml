@@ -8,7 +8,8 @@
 <h1 class="h2 mb-2">@ViewData["Title"]</h1>
 <p class="text-muted">
     Los cajeros registran ventas y clientes. Los administradores además gestionan el catálogo,
-    los precios, los usuarios y pueden anular ventas. Al cambiar un rol se cierran las sesiones abiertas de ese usuario.
+    los precios, los usuarios y pueden anular ventas. Al cambiar un rol o desactivar una cuenta se cierran
+    las sesiones abiertas de ese usuario; las cuentas desactivadas conservan su historial de ventas.
 </p>
 
 <div class="table-responsive">
@@ -19,12 +20,13 @@
                 <th>Correo</th>
                 <th>Registrado</th>
                 <th>Rol</th>
+                <th>Estado</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var user in Model.Users)
             {
-                <tr>
+                <tr class="@(user.IsActive ? null : "text-muted")">
                     <td class="fw-semibold">@user.FullName</td>
                     <td>@user.Email</td>
                     <td>@DisplayFormat.DateTime(Model.ToLocal(user.CreatedAtUtc))</td>
@@ -43,6 +45,23 @@
                                     }
                                 </select>
                                 <button type="submit" class="btn btn-sm btn-outline-primary">Guardar</button>
+                            </form>
+                        }
+                    </td>
+                    <td>
+                        @if (user.Id == Model.CurrentUserId)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="SetActive" asp-route-id="@user.Id" asp-route-active="@(!user.IsActive)"
+                                  class="d-flex align-items-center gap-2"
+                                  data-confirm="@(user.IsActive ? $"¿Desactivar a {user.FullName}? No podrá iniciar sesión." : null)">
+                                <span class="badge @(user.IsActive ? "bg-success" : "bg-secondary")">@(user.IsActive ? "Activo" : "Inactivo")</span>
+                                <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(user.IsActive ? "Desactivar" : "Activar")
+                                </button>
                             </form>
                         }
                     </td>
