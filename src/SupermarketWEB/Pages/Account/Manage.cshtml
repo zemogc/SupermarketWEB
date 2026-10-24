@@ -1,0 +1,48 @@
+@page
+@model SupermarketWEB.Pages.Account.ManageModel
+@{
+    ViewData["Title"] = "Mi cuenta";
+}
+
+<h1 class="h2 mb-4">@ViewData["Title"]</h1>
+
+<div class="row g-4">
+    <div class="col-md-7 col-lg-5">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label class="form-label" for="email">Correo</label>
+                <input id="email" class="form-control" value="@Model.Email" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.FullName" class="form-label"></label>
+                <input asp-for="Input.FullName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a asp-page="./ChangePassword" class="btn btn-outline-secondary">Cambiar contraseña</a>
+        </form>
+    </div>
+
+    <div class="col-md-5 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-6">Rol</dt>
+                    <dd class="col-6">@Model.RoleName</dd>
+                    <dt class="col-6">Miembro desde</dt>
+                    <dd class="col-6">@DisplayFormat.Date(DateOnly.FromDateTime(Model.MemberSinceLocal))</dd>
+                    <dt class="col-6">Ventas registradas</dt>
+                    <dd class="col-6 mb-0">@DisplayFormat.Number(Model.SalesCount)</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
