@@ -39,10 +39,14 @@ public class RegisterModel(SupermarketContext context, IPasswordHasher<User> pas
             return Page();
         }
 
+        // La primera cuenta de una instalación nueva administra el sistema; el resto entra como cajero.
+        var isFirstUser = !await context.Users.AnyAsync();
+
         var user = new User
         {
             Email = email,
             FullName = Input.FullName.Trim(),
+            Role = isFirstUser ? UserRole.Admin : UserRole.Cashier,
             CreatedAtUtc = DateTime.UtcNow,
         };
         user.PasswordHash = passwordHasher.HashPassword(user, Input.Password);

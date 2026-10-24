@@ -47,6 +47,7 @@ public static class DbInitializer
             {
                 Email = DemoUserEmail,
                 FullName = "Administrador",
+                Role = UserRole.Admin,
                 CreatedAtUtc = DateTime.UtcNow,
             };
             user.PasswordHash = hasher.HashPassword(user, DemoUserPassword);

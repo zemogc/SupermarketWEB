@@ -5,6 +5,7 @@ Aplicación web para la gestión de un supermercado construida con **ASP.NET Cor
 ## Funcionalidades
 
 - **Autenticación** con cookies: registro, inicio y cierre de sesión. Todas las páginas requieren sesión salvo las públicas.
+- **Roles** de administrador y cajero, con administración de usuarios. Un cambio de rol se aplica de inmediato y cierra las sesiones abiertas del usuario.
 - **Ventas**: registro con varios productos, cliente opcional (consumidor final) y medio de pago; descuento automático del stock, comprobante imprimible, anulación con devolución del inventario e historial filtrable por fechas.
 - **Panel de inicio** con ventas del día, últimas ventas, valor del inventario y productos con stock bajo o agotados.
 - **Categorías**: CRUD con búsqueda, nombre único y bloqueo del borrado si tienen productos asociados. Productos, clientes y medios de pago con ventas tampoco pueden eliminarse, para conservar el historial.
@@ -41,7 +42,20 @@ En el entorno **Development** se crea un usuario de demostración:
 | --- | --- |
 | `admin@supermarket.local` | `Admin123!` |
 
-También puedes crear tu propia cuenta desde **Registrarse**.
+También puedes crear tu propia cuenta desde **Registrarse**: entrará como cajero, salvo que sea la primera cuenta de una instalación nueva, que queda como administradora.
+
+### Permisos por rol
+
+| Acción | Cajero | Administrador |
+| --- | :---: | :---: |
+| Registrar y consultar ventas | ✔ | ✔ |
+| Anular ventas | | ✔ |
+| Consultar productos | ✔ | ✔ |
+| Crear, editar y eliminar productos | | ✔ |
+| Crear y editar clientes | ✔ | ✔ |
+| Eliminar clientes | | ✔ |
+| Categorías y medios de pago | | ✔ |
+| Administrar usuarios y roles | | ✔ |
 
 ### Con Docker
 
@@ -138,6 +152,7 @@ erDiagram
 - **Servicio de ventas.** Registrar una venta toca varias tablas, así que vive en `SaleService` y no en la página. Corre dentro de una transacción y descuenta el stock con un `UPDATE ... WHERE Stock >= cantidad`: si dos cajas venden el último producto al mismo tiempo, solo una lo logra y la otra se revierte completa, sin dejar stock negativo. Hay una prueba que simula esa carrera.
 - **Ventas como registro histórico.** Cada línea guarda el nombre y el precio vigentes al vender, así el comprobante no cambia si después se edita el producto. Las ventas se anulan, no se borran.
 - **Protección contra overposting.** Los formularios usan `TryUpdateModelAsync` con la lista explícita de campos editables.
+- **Autorización declarativa.** Los permisos por rol se aplican con convenciones de Razor Pages en `Program.cs`, así las reglas quedan en un solo lugar. Cada sesión guarda un sello de seguridad que se valida en cada petición: al cambiar el rol de alguien, sus cookies dejan de servir al instante.
 - **Seguridad por defecto.** Política de autorización global, validación de `ReturnUrl`, cierre de sesión solo por POST, contraseñas con hash, límite de intentos por IP en login/registro, cabeceras `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y `Content-Security-Policy` fuera de desarrollo.
 - **Cultura.** El binding usa la cultura invariante para que los decimales funcionen igual en cualquier servidor; el formato colombiano (`es-CO`) se aplica solo al mostrar valores.
 - **SQLite.** No requiere instalación y facilita clonar y ejecutar. Cambiar a SQL Server solo implica otro proveedor de EF Core y otra cadena de conexión.
