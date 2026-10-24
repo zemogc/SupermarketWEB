@@ -1,0 +1,28 @@
+@page "{id:int}"
+@model SupermarketWEB.Pages.Customers.DeleteModel
+@{
+    ViewData["Title"] = "Eliminar cliente";
+}
+
+<h1 class="h2 mb-4">@ViewData["Title"]</h1>
+
+<div class="card mb-3 confirm-card">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-4">Documento</dt>
+            <dd class="col-sm-8">@Model.Customer.DocumentNumber</dd>
+            <dt class="col-sm-4">Nombre</dt>
+            <dd class="col-sm-8">@Model.Customer.FullName</dd>
+            <dt class="col-sm-4">Correo</dt>
+            <dd class="col-sm-8">@(Model.Customer.Email ?? "—")</dd>
+            <dt class="col-sm-4">Teléfono</dt>
+            <dd class="col-sm-8">@(Model.Customer.Phone ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<p>¿Seguro que deseas eliminar este cliente? Esta acción no se puede deshacer.</p>
+<form method="post">
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-page="Index" class="btn btn-link">Cancelar</a>
+</form>
