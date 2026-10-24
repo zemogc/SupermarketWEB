@@ -30,3 +30,7 @@ dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.underscore_camel_case.capitalization = camel_case
 dotnet_naming_style.underscore_camel_case.required_prefix = _
+
+# Código generado por EF Core: se excluye del análisis de estilo.
+[**/Migrations/*.cs]
+generated_code = true
