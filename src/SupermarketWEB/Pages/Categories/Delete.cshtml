@@ -1,0 +1,36 @@
+@page "{id:int}"
+@model SupermarketWEB.Pages.Categories.DeleteModel
+@{
+    ViewData["Title"] = "Eliminar categoría";
+}
+
+<h1 class="h2 mb-4">@ViewData["Title"]</h1>
+
+<div class="card mb-3" style="max-width: 36rem;">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-4">Nombre</dt>
+            <dd class="col-sm-8">@Model.Category.Name</dd>
+            <dt class="col-sm-4">Descripción</dt>
+            <dd class="col-sm-8">@(Model.Category.Description ?? "—")</dd>
+            <dt class="col-sm-4">Productos</dt>
+            <dd class="col-sm-8">@Model.ProductCount</dd>
+        </dl>
+    </div>
+</div>
+
+@if (Model.ProductCount > 0)
+{
+    <div class="alert alert-warning">
+        Esta categoría tiene productos asociados. Reasígnalos a otra categoría antes de eliminarla.
+    </div>
+    <a asp-page="Index" class="btn btn-outline-secondary">Volver</a>
+}
+else
+{
+    <p>¿Seguro que deseas eliminar esta categoría? Esta acción no se puede deshacer.</p>
+    <form method="post">
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-page="Index" class="btn btn-link">Cancelar</a>
+    </form>
+}
