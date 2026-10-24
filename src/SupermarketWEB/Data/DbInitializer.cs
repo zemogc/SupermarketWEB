@@ -64,14 +64,29 @@ public static class DbInitializer
         var produce = new Category { Name = "Frutas y verduras" };
         var cleaning = new Category { Name = "Aseo", Description = "Productos de limpieza para el hogar" };
 
+        Product[] products =
+        [
+            new() { Name = "Leche entera 1 L", Price = 4500m, Stock = 40, Category = dairy },
+            new() { Name = "Queso campesino 500 g", Price = 12900m, Stock = 15, Category = dairy },
+            new() { Name = "Yogur natural", Price = 3200m, Stock = 4, Category = dairy },
+            new() { Name = "Pan tajado", Price = 6800m, Stock = 25, Category = bakery },
+            new() { Name = "Manzana roja (kg)", Price = 8900m, Stock = 30, Category = produce },
+            new() { Name = "Tomate (kg)", Price = 5400m, Stock = 0, Category = produce },
+            new() { Name = "Detergente líquido 2 L", Price = 21500m, Stock = 12, Category = cleaning },
+        ];
+
         context.Categories.AddRange(dairy, bakery, produce, cleaning);
-        context.Products.AddRange(
-            new Product { Name = "Leche entera 1 L", Price = 4500m, Stock = 40, Category = dairy },
-            new Product { Name = "Queso campesino 500 g", Price = 12900m, Stock = 15, Category = dairy },
-            new Product { Name = "Yogur natural", Price = 3200m, Stock = 4, Category = dairy },
-            new Product { Name = "Pan tajado", Price = 6800m, Stock = 25, Category = bakery },
-            new Product { Name = "Manzana roja (kg)", Price = 8900m, Stock = 30, Category = produce },
-            new Product { Name = "Tomate (kg)", Price = 5400m, Stock = 0, Category = produce },
-            new Product { Name = "Detergente líquido 2 L", Price = 21500m, Stock = 12, Category = cleaning });
+        context.Products.AddRange(products);
+
+        // El kardex arranca con el saldo inicial de cada producto.
+        context.StockMovements.AddRange(products.Where(p => p.Stock > 0).Select(p => new StockMovement
+        {
+            Product = p,
+            Type = StockMovementType.Initial,
+            Quantity = p.Stock,
+            StockAfter = p.Stock,
+            Note = "Stock inicial",
+            CreatedAtUtc = DateTime.UtcNow,
+        }));
     }
 }

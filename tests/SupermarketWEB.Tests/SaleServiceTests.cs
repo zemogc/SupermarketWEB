@@ -34,7 +34,13 @@ public sealed class SaleServiceTests : IDisposable
         _context.AddRange(_milk, _bread, _cash, _cashier);
         _context.SaveChanges();
 
-        _service = new SaleService(_context, new FixedTimeProvider(Now));
+        _service = CreateService(_context);
+    }
+
+    private static SaleService CreateService(SupermarketContext context)
+    {
+        var time = new FixedTimeProvider(Now);
+        return new SaleService(context, new InventoryService(context, time), time);
     }
 
     private SupermarketContext CreateContext() =>
@@ -64,6 +70,11 @@ public sealed class SaleServiceTests : IDisposable
         Assert.Contains(sale.Items, i => i.ProductName == "Pan" && i.UnitPrice == 2500.50m);
         Assert.Equal(8, StockOf(_milk));
         Assert.Equal(2, StockOf(_bread));
+
+        var movements = await _context.StockMovements.Where(m => m.SaleId == sale.Id).ToListAsync();
+        Assert.All(movements, m => Assert.Equal((StockMovementType.Sale, _cashier.Id), (m.Type, m.UserId!.Value)));
+        Assert.Contains(movements, m => m.ProductId == _milk.Id && m.Quantity == -2 && m.StockAfter == 8);
+        Assert.Contains(movements, m => m.ProductId == _bread.Id && m.Quantity == -1 && m.StockAfter == 2);
     }
 
     [Fact]
@@ -101,7 +112,7 @@ public sealed class SaleServiceTests : IDisposable
             .UseSqlite(_connection)
             .AddInterceptors(new StockThiefInterceptor(_bread.Id))
             .Options);
-        var racingService = new SaleService(racingContext, new FixedTimeProvider(Now));
+        var racingService = CreateService(racingContext);
 
         var result = await racingService.RegisterAsync(Request(
             new SaleLineRequest(_milk.Id, 2),
@@ -112,6 +123,7 @@ public sealed class SaleServiceTests : IDisposable
         Assert.Equal(10, StockOf(_milk));
         Assert.Equal(3, StockOf(_bread)); // el robo simulado ocurrió dentro de la transacción revertida
         Assert.Equal(0, await _context.Sales.CountAsync());
+        Assert.Equal(0, await _context.StockMovements.CountAsync());
     }
 
     [Theory]
@@ -151,21 +163,24 @@ public sealed class SaleServiceTests : IDisposable
     {
         var sale = (await _service.RegisterAsync(Request(new SaleLineRequest(_milk.Id, 4)))).Value!;
 
-        var result = await _service.CancelAsync(sale.Id);
+        var result = await _service.CancelAsync(sale.Id, _cashier.Id);
 
         Assert.True(result.Succeeded);
         Assert.Equal(SaleStatus.Cancelled, result.Value!.Status);
         Assert.Equal(Now.UtcDateTime, result.Value.CancelledAtUtc);
         Assert.Equal(10, StockOf(_milk));
+
+        var reversal = await _context.StockMovements.SingleAsync(m => m.SaleId == sale.Id && m.Type == StockMovementType.SaleCancellation);
+        Assert.Equal((4, 10), (reversal.Quantity, reversal.StockAfter));
     }
 
     [Fact]
     public async Task Cancel_Twice_FailsAndDoesNotRestoreStockAgain()
     {
         var sale = (await _service.RegisterAsync(Request(new SaleLineRequest(_milk.Id, 4)))).Value!;
-        await _service.CancelAsync(sale.Id);
+        await _service.CancelAsync(sale.Id, _cashier.Id);
 
-        var result = await _service.CancelAsync(sale.Id);
+        var result = await _service.CancelAsync(sale.Id, _cashier.Id);
 
         Assert.False(result.Succeeded);
         Assert.Contains("La venta ya estaba anulada.", result.Errors);

@@ -1,0 +1,46 @@
+@page
+@model SupermarketWEB.Pages.Inventory.AdjustModel
+@{
+    ViewData["Title"] = "Ajustar inventario por conteo";
+}
+
+<h1 class="h2 mb-2">@ViewData["Title"]</h1>
+<p class="text-muted mb-4">
+    Registra la cantidad que hay físicamente. El sistema calcula la diferencia con el stock registrado
+    y la deja en el historial junto con el motivo (mermas, productos dañados, errores de conteo…).
+</p>
+
+<div class="row">
+    <div class="col-lg-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ProductId" class="form-label"></label>
+                <select asp-for="Input.ProductId" asp-items="Model.ProductOptions" class="form-select">
+                    <option value="">Selecciona un producto</option>
+                </select>
+                <span asp-validation-for="Input.ProductId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.CountedStock" class="form-label"></label>
+                <input asp-for="Input.CountedStock" type="number" min="0" step="1" class="form-control" />
+                <span asp-validation-for="Input.CountedStock" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Reason" class="form-label"></label>
+                <input asp-for="Input.Reason" class="form-control" />
+                <span asp-validation-for="Input.Reason" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Registrar ajuste</button>
+            <a asp-page="Index" class="btn btn-link">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
