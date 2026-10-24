@@ -39,7 +39,16 @@ public static class DemoDataSeeder
         var today = timeProvider.Today();
         var firstDay = today.AddDays(-(Days - 1));
 
-        var cashier = await EnsureCashierAsync(context, passwordHasher, timeProvider.StartOfDayUtc(firstDay.AddDays(-1)));
+        // El catálogo y el administrador se crearon "ahora"; la historia simulada empieza un mes
+        // antes, así que la apertura se fecha antes del primer día para que el kardex sea cronológico.
+        var openingUtc = timeProvider.StartOfDayUtc(firstDay.AddDays(-1)).AddHours(6);
+        await context.StockMovements
+            .Where(m => m.Type == StockMovementType.Initial)
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.CreatedAtUtc, openingUtc));
+        admin.CreatedAtUtc = openingUtc;
+        await context.SaveChangesAsync();
+
+        var cashier = await EnsureCashierAsync(context, passwordHasher, openingUtc);
         await EnsureCustomersAsync(context);
 
         var customerIds = await context.Customers.Select(c => c.Id).ToListAsync();
@@ -59,18 +68,21 @@ public static class DemoDataSeeder
             await inventory.ReceiveAsync(productId, random.Next(90, 140), "Pedido inicial a proveedores", admin.Id);
         }
 
-        var saleIds = new List<int>();
+        // Todo se registra en orden cronológico, para que el saldo de cada movimiento
+        // corresponda al stock real en ese instante.
+        var saleCount = 0;
         for (var day = firstDay; day <= today; day = day.AddDays(1))
         {
-            // Los fines de semana se vende más.
+            // Los fines de semana se vende más. Minutos del día distintos y ordenados (8:00 a 20:59).
             var salesToday = random.Next(2, 6) + (day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? 3 : 0);
+            var minutesOfDay = Enumerable.Range(0, salesToday).Select(_ => random.Next(8 * 60, 21 * 60)).Distinct().Order();
 
-            foreach (var hour in Enumerable.Range(0, salesToday).Select(_ => random.Next(8, 21)).Order())
+            foreach (var minuteOfDay in minutesOfDay)
             {
-                var saleTime = At(timeProvider, day, hour, random.Next(0, 60));
+                var saleTime = At(timeProvider, day, minuteOfDay / 60, minuteOfDay % 60);
                 if (saleTime.GetUtcNow() > timeProvider.GetUtcNow())
                 {
-                    continue; // hoy solo hasta la hora actual
+                    break; // hoy solo hasta la hora actual
                 }
 
                 var available = await context.Products
@@ -96,9 +108,12 @@ public static class DemoDataSeeder
                     lines);
 
                 var result = await CreateSaleService(context, saleTime).RegisterAsync(request);
-                if (result.Succeeded)
+
+                // Algunas ventas se anulan enseguida (30 segundos después, antes de la siguiente venta).
+                if (result.Succeeded && ++saleCount % 37 == 5)
                 {
-                    saleIds.Add(result.Value!.Id);
+                    var cancelTime = new FixedTimeProvider(saleTime.GetUtcNow().UtcDateTime.AddSeconds(30), timeProvider.LocalTimeZone);
+                    await CreateSaleService(context, cancelTime).CancelAsync(result.Value!.Id, admin.Id);
                 }
             }
 
@@ -111,21 +126,17 @@ public static class DemoDataSeeder
                     await new InventoryService(context, restockTime).ReceiveAsync(productId, 40, "Reposición quincenal", admin.Id);
                 }
             }
-        }
 
-        // Un par de anulaciones y un ajuste por conteo para ilustrar esos flujos.
-        foreach (var saleId in saleIds.Where((_, index) => index % 37 == 5))
-        {
-            var sale = await context.Sales.AsNoTracking().FirstAsync(s => s.Id == saleId);
-            var cancelTime = new FixedTimeProvider(sale.CreatedAtUtc.AddMinutes(10), timeProvider.LocalTimeZone);
-            await CreateSaleService(context, cancelTime).CancelAsync(saleId, admin.Id);
-        }
-
-        var adjusted = await context.Products.Where(p => p.Stock > 10).OrderBy(p => p.Id).FirstOrDefaultAsync();
-        if (adjusted is not null)
-        {
-            await new InventoryService(context, At(timeProvider, today.AddDays(-2), hour: 21))
-                .AdjustAsync(adjusted.Id, adjusted.Stock - 2, "Dos unidades dañadas en bodega", admin.Id);
+            // Un ajuste por conteo al cierre de un día reciente.
+            if (day == today.AddDays(-2))
+            {
+                var adjusted = await context.Products.AsNoTracking().Where(p => p.Stock > 10).OrderBy(p => p.Id).FirstOrDefaultAsync();
+                if (adjusted is not null)
+                {
+                    await new InventoryService(context, At(timeProvider, day, hour: 21))
+                        .AdjustAsync(adjusted.Id, adjusted.Stock - 2, "Dos unidades dañadas en bodega", admin.Id);
+                }
+            }
         }
 
         context.ChangeTracker.Clear();
