@@ -213,6 +213,50 @@ namespace SupermarketWEB.Data.Migrations
                     b.ToTable("SaleItems");
                 });
 
+            modelBuilder.Entity("SupermarketWEB.Models.StockMovement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SaleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StockAfter")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaleId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ProductId", "CreatedAtUtc");
+
+                    b.ToTable("StockMovements");
+                });
+
             modelBuilder.Entity("SupermarketWEB.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -308,6 +352,31 @@ namespace SupermarketWEB.Data.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Sale");
+                });
+
+            modelBuilder.Entity("SupermarketWEB.Models.StockMovement", b =>
+                {
+                    b.HasOne("SupermarketWEB.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SupermarketWEB.Models.Sale", "Sale")
+                        .WithMany()
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SupermarketWEB.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Sale");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SupermarketWEB.Models.Category", b =>

@@ -19,6 +19,8 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
 
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
 
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
@@ -91,6 +93,18 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
 
             entity.HasOne(i => i.Sale).WithMany(s => s.Items).HasForeignKey(i => i.SaleId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(i => i.Product).WithMany().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<StockMovement>(entity =>
+        {
+            entity.Property(m => m.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(m => m.Note).HasMaxLength(300);
+            entity.HasIndex(m => new { m.ProductId, m.CreatedAtUtc });
+
+            // El historial de un producto se borra con él: solo pueden eliminarse productos sin ventas.
+            entity.HasOne(m => m.Product).WithMany().HasForeignKey(m => m.ProductId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(m => m.Sale).WithMany().HasForeignKey(m => m.SaleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(m => m.User).WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

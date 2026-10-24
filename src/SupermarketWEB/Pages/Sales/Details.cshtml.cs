@@ -45,7 +45,7 @@ public class DetailsModel(SupermarketContext context, SaleService saleService, T
             return Forbid();
         }
 
-        var result = await saleService.CancelAsync(id);
+        var result = await saleService.CancelAsync(id, User.GetUserId());
 
         if (result.Succeeded)
         {

@@ -33,6 +33,10 @@
                                 <li class="nav-item"><a class="nav-link" asp-page="/Categories/Index">Categorías</a></li>
                             }
                             <li class="nav-item"><a class="nav-link" asp-page="/Products/Index">Productos</a></li>
+                            @if (isAdmin)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/Inventory/Index">Inventario</a></li>
+                            }
                             <li class="nav-item"><a class="nav-link" asp-page="/Customers/Index">Clientes</a></li>
                             @if (isAdmin)
                             {
