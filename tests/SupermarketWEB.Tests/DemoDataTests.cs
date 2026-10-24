@@ -37,6 +37,23 @@ public class DemoDataTests(DemoDataWebFactory factory) : IClassFixture<DemoDataW
     }
 
     [Fact]
+    public async Task DemoData_KardexIsChronological()
+    {
+        var movements = await factory.WithContextAsync(db => db.StockMovements.AsNoTracking().ToListAsync());
+
+        // Recorridos en orden de fecha, los saldos deben encadenarse: saldo anterior + cantidad = saldo.
+        Assert.All(movements.GroupBy(m => m.ProductId), product =>
+        {
+            var ordered = product.OrderBy(m => m.CreatedAtUtc).ThenBy(m => m.Id).ToList();
+            Assert.Equal(StockMovementType.Initial, ordered[0].Type);
+            for (var i = 1; i < ordered.Count; i++)
+            {
+                Assert.Equal(ordered[i - 1].StockAfter + ordered[i].Quantity, ordered[i].StockAfter);
+            }
+        });
+    }
+
+    [Fact]
     public async Task DemoCashier_CanSignInAndSeesOwnSales()
     {
         var client = factory.CreateBrowserClient();
