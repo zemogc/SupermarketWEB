@@ -5,8 +5,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Crea el usuario de demostración (admin@supermarket.local / Admin123!) si no hay usuarios.
+      # Usuarios de demostración (admin@supermarket.local / Admin123! y cajero@supermarket.local / Cajero123!)
+      # y 30 días de operación simulada si la base no tiene ventas.
       SeedDemoUser: "true"
+      SeedDemoData: "true"
     volumes:
       - supermarket-data:/app/data
     restart: unless-stopped

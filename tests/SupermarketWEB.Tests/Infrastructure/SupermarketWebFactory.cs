@@ -27,6 +27,11 @@ public class SupermarketWebFactory : WebApplicationFactory<Program>
     /// </summary>
     protected virtual bool SeedDemoUser => true;
 
+    /// <summary>
+    /// Si es verdadero, se generan los 30 días de operación simulada.
+    /// </summary>
+    protected virtual bool SeedDemoData => false;
+
     public HttpClient CreateBrowserClient() =>
         CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
@@ -42,6 +47,7 @@ public class SupermarketWebFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:SupermarketDB", _connectionString);
         builder.UseSetting("SeedDemoUser", SeedDemoUser.ToString());
+        builder.UseSetting("SeedDemoData", SeedDemoData.ToString());
         builder.UseSetting("RateLimiting:AuthenticationPermitsPerMinute", "1000");
     }
 
@@ -59,4 +65,9 @@ public class SupermarketWebFactory : WebApplicationFactory<Program>
 public sealed class EmptyUsersWebFactory : SupermarketWebFactory
 {
     protected override bool SeedDemoUser => false;
+}
+
+public sealed class DemoDataWebFactory : SupermarketWebFactory
+{
+    protected override bool SeedDemoData => true;
 }

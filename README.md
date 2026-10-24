@@ -39,11 +39,12 @@ dotnet run --project src/SupermarketWEB
 
 La aplicación queda disponible en `http://localhost:5272`. Al iniciar se aplican las migraciones y, si la base está vacía, se cargan datos de ejemplo.
 
-En el entorno **Development** se crea un usuario de demostración:
+En el entorno **Development** (y en Docker) se crean dos usuarios de demostración y 30 días de operación simulada: compras a proveedores, más de cien ventas, algunas anulaciones y un ajuste de inventario. Así el panel, los reportes y el kardex tienen datos desde el primer inicio. Los datos se generan con los mismos servicios que la operación real, por lo que respetan sus reglas (por ejemplo, la suma de movimientos cuadra con el stock).
 
-| Correo | Contraseña |
-| --- | --- |
-| `admin@supermarket.local` | `Admin123!` |
+| Rol | Correo | Contraseña |
+| --- | --- | --- |
+| Administrador | `admin@supermarket.local` | `Admin123!` |
+| Cajero | `cajero@supermarket.local` | `Cajero123!` |
 
 También puedes crear tu propia cuenta desde **Registrarse**: entrará como cajero, salvo que sea la primera cuenta de una instalación nueva, que queda como administradora.
 
@@ -188,7 +189,8 @@ dotnet ef migrations add NombreDeLaMigracion --project src/SupermarketWEB -o Dat
 | Clave | Descripción | Valor por defecto |
 | --- | --- | --- |
 | `ConnectionStrings:SupermarketDB` | Cadena de conexión SQLite | `Data Source=supermarket.db` |
-| `SeedDemoUser` | Crea el usuario de demostración | `true` en Development |
+| `SeedDemoUser` | Crea el usuario administrador de demostración | `true` en Development |
+| `SeedDemoData` | Genera el cajero demo y 30 días de operación simulada si no hay ventas | `true` en Development |
 | `RateLimiting:AuthenticationPermitsPerMinute` | Intentos de login/registro por IP y minuto | `5` |
 | `DataProtection:KeysPath` | Carpeta persistente para las claves de la cookie de sesión | Ubicación del sistema (`/app/data/keys` en Docker) |
 | `HttpsRedirection:Enabled` | Redirige HTTP a HTTPS; se desactiva detrás de un proxy con TLS | `true` (`false` en Docker) |
