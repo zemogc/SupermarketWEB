@@ -6,11 +6,18 @@
     <title>@ViewData["Title"] - SupermarketWEB</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SupermarketWEB.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-md navbar-dark bg-success box-shadow mb-4">
+        @{
+            // Sección activa a partir de la ruta de la página actual (por ejemplo "/Sales/Create").
+            var currentPage = ViewContext.RouteData.Values["page"] as string ?? string.Empty;
+            bool IsCurrent(params string[] sections) =>
+                sections.Any(s => s == "/Index" ? currentPage == s : currentPage.StartsWith(s, StringComparison.Ordinal));
+            string? ActiveClass(params string[] sections) => IsCurrent(sections) ? "active" : null;
+            string? AriaCurrent(params string[] sections) => IsCurrent(sections) ? "page" : null;
+        }
+        <nav class="navbar navbar-expand-lg navbar-dark bg-success box-shadow mb-4" aria-label="Navegación principal">
             <div class="container">
                 <a class="navbar-brand fw-semibold" asp-page="/Index">SupermarketWEB</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
@@ -22,35 +29,45 @@
                     {
                         var isAdmin = User.IsInRole(Policies.AdminRole);
                         <ul class="navbar-nav me-auto">
-                            <li class="nav-item"><a class="nav-link" asp-page="/Index">Inicio</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Sales/Index">Ventas</a></li>
+                            <li class="nav-item"><a class="nav-link @ActiveClass("/Index")" aria-current="@AriaCurrent("/Index")" asp-page="/Index">Inicio</a></li>
+                            <li class="nav-item"><a class="nav-link @ActiveClass("/Sales/")" aria-current="@AriaCurrent("/Sales/")" asp-page="/Sales/Index">Ventas</a></li>
+                            <li class="nav-item"><a class="nav-link @ActiveClass("/Products/")" aria-current="@AriaCurrent("/Products/")" asp-page="/Products/Index">Productos</a></li>
+                            <li class="nav-item"><a class="nav-link @ActiveClass("/Customers/")" aria-current="@AriaCurrent("/Customers/")" asp-page="/Customers/Index">Clientes</a></li>
                             @if (isAdmin)
                             {
-                                <li class="nav-item"><a class="nav-link" asp-page="/Reports/Index">Reportes</a></li>
-                            }
-                            @if (isAdmin)
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-page="/Categories/Index">Categorías</a></li>
-                            }
-                            <li class="nav-item"><a class="nav-link" asp-page="/Products/Index">Productos</a></li>
-                            @if (isAdmin)
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-page="/Inventory/Index">Inventario</a></li>
-                            }
-                            <li class="nav-item"><a class="nav-link" asp-page="/Customers/Index">Clientes</a></li>
-                            @if (isAdmin)
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-page="/PayModes/Index">Medios de pago</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-page="/Users/Index">Usuarios</a></li>
+                                <li class="nav-item"><a class="nav-link @ActiveClass("/Inventory/")" aria-current="@AriaCurrent("/Inventory/")" asp-page="/Inventory/Index">Inventario</a></li>
+                                <li class="nav-item"><a class="nav-link @ActiveClass("/Reports/")" aria-current="@AriaCurrent("/Reports/")" asp-page="/Reports/Index">Reportes</a></li>
+                                <li class="nav-item dropdown">
+                                    <button type="button" class="nav-link dropdown-toggle btn btn-link @ActiveClass("/Categories/", "/PayModes/", "/Users/")"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        Administración
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item @ActiveClass("/Categories/")" asp-page="/Categories/Index">Categorías</a></li>
+                                        <li><a class="dropdown-item @ActiveClass("/PayModes/")" asp-page="/PayModes/Index">Medios de pago</a></li>
+                                        <li><a class="dropdown-item @ActiveClass("/Users/")" asp-page="/Users/Index">Usuarios</a></li>
+                                    </ul>
+                                </li>
                             }
                         </ul>
-                        <form method="post" asp-page="/Account/Logout" class="d-flex align-items-center gap-2">
-                            <a asp-page="/Account/Manage" class="navbar-text small text-white text-decoration-none" title="Mi cuenta">
-                                @User.Identity.Name
-                                <span class="badge bg-light text-success ms-1">@(isAdmin ? "Admin" : "Cajero")</span>
-                            </a>
-                            <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
-                        </form>
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <button type="button" class="nav-link dropdown-toggle btn btn-link text-white" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @User.Identity.Name
+                                    <span class="badge bg-light text-success ms-1">@(isAdmin ? "Admin" : "Cajero")</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-page="/Account/Manage">Mi cuenta</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Account/ChangePassword">Cambiar contraseña</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form method="post" asp-page="/Account/Logout">
+                                            <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
                     }
                     else
                     {
