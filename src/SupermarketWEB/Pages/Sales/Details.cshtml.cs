@@ -35,8 +35,16 @@ public class DetailsModel(SupermarketContext context, SaleService saleService, T
         return Page();
     }
 
+    public bool CanCancel => Sale.Status == SaleStatus.Completed && User.IsInRole(Policies.AdminRole);
+
     public async Task<IActionResult> OnPostCancelAsync(int id)
     {
+        // La página es visible para cajeros, así que la anulación se autoriza en el handler.
+        if (!User.IsInRole(Policies.AdminRole))
+        {
+            return Forbid();
+        }
+
         var result = await saleService.CancelAsync(id);
 
         if (result.Succeeded)

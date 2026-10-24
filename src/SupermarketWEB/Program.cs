@@ -12,7 +12,19 @@ using SupermarketWEB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorPages()
+builder.Services.AddRazorPages(options =>
+    {
+        // Los cajeros registran ventas y clientes; el catálogo, los usuarios y los borrados
+        // quedan reservados a administradores.
+        var conventions = options.Conventions;
+        conventions.AuthorizeFolder("/Categories", Policies.Admin);
+        conventions.AuthorizeFolder("/PayModes", Policies.Admin);
+        conventions.AuthorizeFolder("/Users", Policies.Admin);
+        conventions.AuthorizePage("/Products/Create", Policies.Admin);
+        conventions.AuthorizePage("/Products/Edit", Policies.Admin);
+        conventions.AuthorizePage("/Products/Delete", Policies.Admin);
+        conventions.AuthorizePage("/Customers/Delete", Policies.Admin);
+    })
     .AddMvcOptions(options =>
     {
         var messages = options.ModelBindingMessageProvider;
@@ -45,17 +57,19 @@ builder.Services
     {
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Cookie.Name = "SupermarketWEB.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Events.OnValidatePrincipal = CookieSignIn.ValidatePrincipalAsync;
     });
 
 // Todas las páginas requieren sesión salvo las marcadas con [AllowAnonymous].
 builder.Services.AddAuthorizationBuilder()
-    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
+    .AddPolicy(Policies.Admin, policy => policy.RequireRole(Policies.AdminRole));
 
 builder.Services.AddAuthenticationRateLimiting(
     builder.Configuration.GetValue("RateLimiting:AuthenticationPermitsPerMinute", 5));
