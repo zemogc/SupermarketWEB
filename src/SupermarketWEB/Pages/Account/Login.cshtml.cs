@@ -51,6 +51,13 @@ public class LoginModel(SupermarketContext context, IPasswordHasher<User> passwo
             return Page();
         }
 
+        // Se informa solo después de verificar la contraseña, para no revelar el estado de cuentas ajenas.
+        if (!user.IsActive)
+        {
+            ModelState.AddModelError(string.Empty, "Tu cuenta está desactivada. Comunícate con un administrador.");
+            return Page();
+        }
+
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
             user.PasswordHash = passwordHasher.HashPassword(user, Input.Password);
