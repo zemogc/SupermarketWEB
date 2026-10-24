@@ -90,6 +90,9 @@ async function main() {
     await page.goto(`${BASE}/Products`);
     await shot('productos');
 
+    await page.goto(`${BASE}/Suppliers`);
+    await shot('proveedores');
+
     await page.goto(`${BASE}/Users`);
     await shot('usuarios');
 
