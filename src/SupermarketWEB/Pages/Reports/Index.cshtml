@@ -1,0 +1,145 @@
+@page
+@model SupermarketWEB.Pages.Reports.IndexModel
+@{
+    ViewData["Title"] = "Reportes de ventas";
+    var report = Model.Report;
+    var maxDailyRevenue = report.ByDay.Count == 0 ? 0 : report.ByDay.Max(d => d.Revenue);
+    var maxProductRevenue = report.ByProduct.Count == 0 ? 0 : report.ByProduct.Max(p => p.Revenue);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">@ViewData["Title"]</h1>
+    <a asp-page-handler="Export" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")"
+       class="btn btn-outline-success">Exportar CSV</a>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-sm-4 col-md-3">
+        <label asp-for="From" class="form-label small">Desde</label>
+        <input asp-for="From" type="date" class="form-control" />
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <label asp-for="To" class="form-label small">Hasta</label>
+        <input asp-for="To" type="date" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Generar</button>
+    </div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ingresos</div>
+                <div class="fs-3 fw-semibold">@DisplayFormat.Currency(report.Summary.Revenue)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ventas</div>
+                <div class="fs-3 fw-semibold">@DisplayFormat.Number(report.Summary.SaleCount)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ticket promedio</div>
+                <div class="fs-3 fw-semibold">@DisplayFormat.Currency(report.Summary.AverageTicket)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Unidades vendidas</div>
+                <div class="fs-3 fw-semibold">@DisplayFormat.Number(report.Summary.UnitCount)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (report.Summary.SaleCount == 0)
+{
+    <p class="text-muted">No hay ventas completadas entre el @DisplayFormat.Date(report.From) y el @DisplayFormat.Date(report.To).</p>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Productos más vendidos</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-end">Unidades</th>
+                                <th class="text-end">Ingresos</th>
+                                <th class="report-bar-cell"><span class="visually-hidden">Participación</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in report.ByProduct.Take(10))
+                            {
+                                <tr>
+                                    <td>@product.ProductName</td>
+                                    <td class="text-end">@DisplayFormat.Number(product.Units)</td>
+                                    <td class="text-end">@DisplayFormat.Currency(product.Revenue)</td>
+                                    <td><progress class="report-bar" value="@product.Revenue" max="@maxProductRevenue"></progress></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Por medio de pago</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var payMode in report.ByPayMode)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>@payMode.PayModeName <span class="text-muted small">· @payMode.SaleCount venta(s)</span></span>
+                            <span class="fw-semibold">@DisplayFormat.Currency(payMode.Revenue)</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold">Ventas por día</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Día</th>
+                                <th class="text-end">Ventas</th>
+                                <th class="text-end">Ingresos</th>
+                                <th class="report-bar-cell"><span class="visually-hidden">Comparación</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in report.ByDay)
+                            {
+                                <tr>
+                                    <td>@DisplayFormat.Date(day.Day)</td>
+                                    <td class="text-end">@day.SaleCount</td>
+                                    <td class="text-end">@DisplayFormat.Currency(day.Revenue)</td>
+                                    <td><progress class="report-bar" value="@day.Revenue" max="@maxDailyRevenue"></progress></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
