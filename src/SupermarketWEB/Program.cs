@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using SupermarketWEB.Data;
+using SupermarketWEB.Infrastructure;
 using SupermarketWEB.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +53,9 @@ builder.Services
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
+builder.Services.AddAuthenticationRateLimiting(
+    builder.Configuration.GetValue("RateLimiting:AuthenticationPermitsPerMinute", 5));
+
 var app = builder.Build();
 
 await DbInitializer.InitializeAsync(app.Services, app.Configuration.GetValue<bool>("SeedDemoUser"));
@@ -62,11 +66,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseSecurityHeaders(includeContentSecurityPolicy: !app.Environment.IsDevelopment());
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRequestLocalization();
 
 app.UseRouting();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
