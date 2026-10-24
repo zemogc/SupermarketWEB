@@ -1,0 +1,9 @@
+@page
+@model SupermarketWEB.Pages.Account.AccessDeniedModel
+@{
+    ViewData["Title"] = "Acceso denegado";
+}
+
+<h1 class="h2">@ViewData["Title"]</h1>
+<p>Tu usuario no tiene permisos para esta sección. Si necesitas acceso, pídeselo a un administrador.</p>
+<a asp-page="/Index" class="btn btn-outline-secondary">Volver al inicio</a>

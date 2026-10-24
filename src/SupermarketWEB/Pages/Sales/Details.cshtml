@@ -9,7 +9,7 @@
     <a asp-page="Index" class="btn btn-link px-0">&larr; Volver a ventas</a>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-secondary" data-print>Imprimir</button>
-        @if (Model.Sale.Status == SaleStatus.Completed)
+        @if (Model.CanCancel)
         {
             <form method="post" asp-page-handler="Cancel"
                   data-confirm="¿Anular esta venta? El stock de sus productos volverá al inventario.">

@@ -103,7 +103,14 @@
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <span>
-                                <a asp-page="/Products/Edit" asp-route-id="@product.Id">@product.Name</a>
+                                @if (User.IsInRole(Policies.AdminRole))
+                                {
+                                    <a asp-page="/Products/Edit" asp-route-id="@product.Id">@product.Name</a>
+                                }
+                                else
+                                {
+                                    @product.Name
+                                }
                                 <span class="text-muted small">· @product.Category?.Name</span>
                             </span>
                             <span class="badge @(product.Stock == 0 ? "bg-danger" : "bg-warning text-dark")">@product.Stock</span>

@@ -66,6 +66,8 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
             entity.Property(u => u.Email).HasMaxLength(150).IsRequired();
             entity.Property(u => u.FullName).HasMaxLength(150).IsRequired();
             entity.Property(u => u.PasswordHash).IsRequired();
+            entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
+            entity.Property(u => u.SecurityStamp).HasMaxLength(32).IsRequired();
             entity.HasIndex(u => u.Email).IsUnique();
         });
 

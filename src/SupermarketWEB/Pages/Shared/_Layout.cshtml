@@ -20,16 +20,27 @@
                 <div id="mainNav" class="navbar-collapse collapse">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        var isAdmin = User.IsInRole(Policies.AdminRole);
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item"><a class="nav-link" asp-page="/Index">Inicio</a></li>
                             <li class="nav-item"><a class="nav-link" asp-page="/Sales/Index">Ventas</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/Categories/Index">Categorías</a></li>
+                            @if (isAdmin)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/Categories/Index">Categorías</a></li>
+                            }
                             <li class="nav-item"><a class="nav-link" asp-page="/Products/Index">Productos</a></li>
                             <li class="nav-item"><a class="nav-link" asp-page="/Customers/Index">Clientes</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-page="/PayModes/Index">Medios de pago</a></li>
+                            @if (isAdmin)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/PayModes/Index">Medios de pago</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Users/Index">Usuarios</a></li>
+                            }
                         </ul>
                         <form method="post" asp-page="/Account/Logout" class="d-flex align-items-center gap-2">
-                            <span class="navbar-text small">@User.Identity.Name</span>
+                            <span class="navbar-text small">
+                                @User.Identity.Name
+                                <span class="badge bg-light text-success ms-1">@(isAdmin ? "Admin" : "Cajero")</span>
+                            </span>
                             <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
                         </form>
                     }
