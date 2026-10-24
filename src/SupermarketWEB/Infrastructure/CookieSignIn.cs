@@ -32,7 +32,7 @@ public static class CookieSignIn
     }
 
     /// <summary>
-    /// Rechaza la cookie si el usuario ya no existe o si su sello de seguridad cambió
+    /// Rechaza la cookie si el usuario ya no existe, fue desactivado o su sello de seguridad cambió
     /// (por ejemplo, al cambiarle el rol), para que los permisos se apliquen de inmediato.
     /// </summary>
     public static async Task ValidatePrincipalAsync(CookieValidatePrincipalContext context)
@@ -47,7 +47,7 @@ public static class CookieSignIn
         }
 
         var db = context.HttpContext.RequestServices.GetRequiredService<SupermarketContext>();
-        var isCurrent = await db.Users.AnyAsync(u => u.Id == userId && u.SecurityStamp == stamp);
+        var isCurrent = await db.Users.AnyAsync(u => u.Id == userId && u.IsActive && u.SecurityStamp == stamp);
 
         if (!isCurrent)
         {

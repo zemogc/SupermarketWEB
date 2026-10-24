@@ -19,6 +19,11 @@ public class User
     public UserRole Role { get; set; } = UserRole.Cashier;
 
     /// <summary>
+    /// Un usuario desactivado no puede iniciar sesión, pero conserva su historial de ventas.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
     /// Cambia cada vez que se modifican los permisos del usuario. Las sesiones guardan el valor
     /// con el que se emitieron y se invalidan si deja de coincidir.
     /// </summary>
