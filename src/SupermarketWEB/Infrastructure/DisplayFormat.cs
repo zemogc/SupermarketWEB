@@ -17,6 +17,8 @@ public static class DisplayFormat
 
     public static string Number(int value) => value.ToString("N0", DisplayCulture);
 
+    public static string Percent(decimal? ratio) => ratio?.ToString("P1", DisplayCulture) ?? "—";
+
     public static string Date(DateOnly? value) => value?.ToString("dd/MM/yyyy", DisplayCulture) ?? "—";
 
     public static string DateTime(DateTime value) => value.ToString("dd/MM/yyyy HH:mm", DisplayCulture);

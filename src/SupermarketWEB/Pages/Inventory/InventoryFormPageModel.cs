@@ -12,11 +12,13 @@ namespace SupermarketWEB.Pages.Inventory;
 /// </summary>
 public abstract class InventoryFormPageModel(SupermarketContext context) : PageModel
 {
+    protected SupermarketContext Context { get; } = context;
+
     public SelectList ProductOptions { get; private set; } = null!;
 
     protected async Task LoadProductOptionsAsync(int? selectedProductId)
     {
-        var products = await context.Products
+        var products = await Context.Products
             .AsNoTracking()
             .OrderBy(p => p.Name)
             .Select(p => new { p.Id, Label = p.Name + " (stock " + p.Stock + ")" })

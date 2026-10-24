@@ -8,6 +8,10 @@ public class EditModel(SupermarketContext context) : ProductFormPageModel(contex
 {
     public int CurrentStock { get; private set; }
 
+    public decimal? AverageCost { get; private set; }
+
+    public decimal? Margin { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var product = await Context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
@@ -17,7 +21,7 @@ public class EditModel(SupermarketContext context) : ProductFormPageModel(contex
         }
 
         Product = product;
-        CurrentStock = product.Stock;
+        SetInventoryInfo(product);
         await LoadCategoryOptionsAsync();
         return Page();
     }
@@ -30,7 +34,7 @@ public class EditModel(SupermarketContext context) : ProductFormPageModel(contex
             return NotFound();
         }
 
-        CurrentStock = product.Stock;
+        SetInventoryInfo(product);
 
         if (!await TryApplyFormAsync(product, includeInitialStock: false))
         {
@@ -40,7 +44,19 @@ public class EditModel(SupermarketContext context) : ProductFormPageModel(contex
 
         await Context.SaveChangesAsync();
 
+        if (product.Margin < 0)
+        {
+            TempData["ErrorMessage"] = $"Atención: el precio de \"{product.Name}\" quedó por debajo de su costo promedio.";
+        }
+
         TempData["StatusMessage"] = $"Producto \"{product.Name}\" actualizado.";
         return RedirectToPage("./Index");
+    }
+
+    private void SetInventoryInfo(Models.Product product)
+    {
+        CurrentStock = product.Stock;
+        AverageCost = product.AverageCost;
+        Margin = product.Margin;
     }
 }

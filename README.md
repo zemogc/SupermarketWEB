@@ -1,5 +1,11 @@
 # SupermarketWEB
 
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+![ASP.NET Core Razor Pages](https://img.shields.io/badge/ASP.NET%20Core-Razor%20Pages-512BD4)
+![EF Core + SQLite](https://img.shields.io/badge/EF%20Core-SQLite-003B57?logo=sqlite&logoColor=white)
+![Pruebas](https://img.shields.io/badge/pruebas-169%20superadas-2ea44f)
+![Docker](https://img.shields.io/badge/Docker-listo-2496ED?logo=docker&logoColor=white)
+
 Aplicación web para la gestión de un supermercado construida con **ASP.NET Core Razor Pages (.NET 10)** y **Entity Framework Core**. Permite registrar ventas con control de inventario y administrar categorías, productos, clientes y medios de pago, con autenticación de usuarios y un panel con indicadores del negocio.
 
 ![Panel de inicio](docs/screenshots/dashboard.png)
@@ -12,14 +18,16 @@ Tomadas de la aplicación en modo Production con los [datos de demostración](#p
 | :---: | :---: |
 | **Nueva venta**: filas dinámicas con subtotales en vivo | **Comprobante** imprimible, con opción de anular |
 | ![Nueva venta](docs/screenshots/nueva-venta.png) | ![Comprobante de venta](docs/screenshots/comprobante.png) |
-| **Reportes**: ingresos, más vendidos y medios de pago | **Kardex**: cada movimiento con su saldo y usuario |
+| **Reportes**: ingresos, utilidad y margen por producto | **Kardex**: cada movimiento con su saldo y usuario |
 | ![Reportes de ventas](docs/screenshots/reportes.png) | ![Movimientos de inventario](docs/screenshots/inventario.png) |
 | **Historial de ventas** con anuladas y totales del periodo | **Productos** con alertas de stock bajo y agotado |
 | ![Historial de ventas](docs/screenshots/ventas.png) | ![Productos](docs/screenshots/productos.png) |
-| **Usuarios**: roles y activación de cuentas | **Menú de administración** (solo administradores) |
-| ![Usuarios](docs/screenshots/usuarios.png) | ![Menú de administración](docs/screenshots/menu-administracion.png) |
-| **Inicio de sesión** | **Vista móvil** del cajero |
-| ![Inicio de sesión](docs/screenshots/login.png) | <img src="docs/screenshots/movil-cajero.png" alt="Vista móvil del cajero" width="260"> |
+| **Proveedores** con sus entradas de mercancía | **Usuarios**: roles y activación de cuentas |
+| ![Proveedores](docs/screenshots/proveedores.png) | ![Usuarios](docs/screenshots/usuarios.png) |
+| **Menú de administración** (solo administradores) | **Vista móvil** del cajero |
+| ![Menú de administración](docs/screenshots/menu-administracion.png) | <img src="docs/screenshots/movil-cajero.png" alt="Vista móvil del cajero" width="260"> |
+| **Inicio de sesión** | |
+| ![Inicio de sesión](docs/screenshots/login.png) | |
 
 ## Funcionalidades
 
@@ -28,7 +36,8 @@ Tomadas de la aplicación en modo Production con los [datos de demostración](#p
 - **Roles** de administrador y cajero, con administración de usuarios. Un cambio de rol se aplica de inmediato y cierra las sesiones abiertas del usuario. Las cuentas se desactivan en lugar de borrarse, para conservar su historial de ventas.
 - **Ventas**: registro con varios productos, cliente opcional (consumidor final) y medio de pago; descuento automático del stock, comprobante imprimible, anulación con devolución del inventario e historial filtrable por fechas.
 - **Inventario (kardex)**: cada cambio de stock queda registrado con su tipo (saldo inicial, entrada, ajuste, venta o anulación), usuario, motivo y saldo resultante. Entradas de mercancía y ajustes por conteo físico con motivo obligatorio.
-- **Reportes** (administradores): ingresos, ticket promedio, ventas por día, productos más vendidos y desglose por medio de pago para cualquier rango de fechas, con exportación del detalle a CSV.
+- **Proveedores y costos**: las entradas de mercancía registran proveedor y costo unitario, que actualizan el costo promedio ponderado de cada producto.
+- **Reportes** (administradores): ingresos, utilidad bruta, margen, ticket promedio, ventas por día, productos más vendidos con su margen y desglose por medio de pago para cualquier rango de fechas, con exportación del detalle a CSV.
 - **Panel de inicio** con ventas del día, últimas ventas, valor del inventario y productos con stock bajo o agotados.
 - **Categorías**: CRUD con búsqueda, nombre único y bloqueo del borrado si tienen productos asociados. Productos, clientes y medios de pago con ventas tampoco pueden eliminarse, para conservar el historial.
 - **Productos**: CRUD con paginación, búsqueda, filtro por categoría y por stock bajo. El stock no se edita a mano: cambia solo con movimientos de inventario.
@@ -81,6 +90,7 @@ También puedes crear tu propia cuenta desde **Registrarse**: entrará como caje
 | Administrar usuarios y roles | | ✔ |
 | Reportes y exportación CSV | | ✔ |
 | Entradas, ajustes e historial de inventario | | ✔ |
+| Proveedores | | ✔ |
 
 ### Con Docker
 
@@ -131,12 +141,19 @@ erDiagram
     PAYMODE ||--o{ SALE : "se paga con"
     USER ||--o{ SALE : registra
     PRODUCT ||--o{ STOCK_MOVEMENT : registra
+    SUPPLIER |o--o{ STOCK_MOVEMENT : abastece
+    SUPPLIER {
+        int Id
+        string Name "único"
+        string TaxId "NIT único"
+    }
     SALE |o--o{ STOCK_MOVEMENT : origina
     STOCK_MOVEMENT {
         int Id
         string Type "Initial | Receipt | Adjustment | Sale | SaleCancellation"
         int Quantity "positiva o negativa"
         int StockAfter
+        decimal UnitCost "en entradas"
         string Note
     }
     SALE {
@@ -149,6 +166,7 @@ erDiagram
         int Id
         string ProductName "copia al vender"
         decimal UnitPrice "copia al vender"
+        decimal UnitCost "costo promedio al vender"
         int Quantity
     }
     CATEGORY {
@@ -161,6 +179,7 @@ erDiagram
         string Name
         decimal Price
         int Stock
+        decimal AverageCost "promedio ponderado"
         int CategoryId
     }
     CUSTOMER {
@@ -189,6 +208,7 @@ erDiagram
 - **Razor Pages con el `DbContext` en cada página.** Para un CRUD de este tamaño evita capas sin lógica propia; las reglas compartidas viven en clases base por módulo (`ProductFormPageModel`, `CustomerFormPageModel`…).
 - **Servicio de ventas.** Registrar una venta toca varias tablas, así que vive en `SaleService` y no en la página. Corre dentro de una transacción y descuenta el stock con un `UPDATE ... WHERE Stock >= cantidad`: si dos cajas venden el último producto al mismo tiempo, solo una lo logra y la otra se revierte completa, sin dejar stock negativo. Hay una prueba que simula esa carrera.
 - **El stock solo cambia mediante movimientos.** `InventoryService` es el único punto que modifica el stock y siempre deja un `StockMovement`, de modo que la suma de movimientos de un producto es igual a su stock (hay una prueba de ese invariante). Los ajustes por conteo usan concurrencia optimista: si se vendió algo mientras se contaba, el ajuste se rechaza en lugar de borrar esa venta del inventario.
+- **Costo promedio ponderado y utilidad honesta.** Cada entrada con costo recalcula el costo promedio del producto y cada venta guarda el costo vigente, así la utilidad de una venta no cambia con compras posteriores. Las ventas de productos sin costo registrado no entran en la utilidad ni en el margen, y el reporte indica cuánto ingreso quedó fuera, en lugar de mostrar un margen inflado.
 - **Ventas como registro histórico.** Cada línea guarda el nombre y el precio vigentes al vender, así el comprobante no cambia si después se edita el producto. Las ventas se anulan, no se borran.
 - **Exportación CSV segura.** Sigue RFC 4180, incluye BOM UTF-8 para que Excel muestre bien las tildes y antepone `'` a los textos que empiezan con `=`, `+`, `-` o `@`, para evitar la inyección de fórmulas al abrir el archivo.
 - **Fechas en UTC, días en hora local.** Las ventas se guardan en UTC y los filtros y reportes agrupan por el día local del servidor; `TimeProvider` permite probar esos límites con una zona horaria fija.

@@ -11,27 +11,95 @@ public class InventoryService(SupermarketContext context, TimeProvider timeProvi
 {
     public const int MaxQuantity = 100_000;
 
-    public async Task<ServiceResult<StockMovement>> ReceiveAsync(int productId, int quantity, string? note, int userId)
+    public const decimal MaxUnitCost = 100_000_000m;
+
+    /// <summary>
+    /// Registra una entrada de mercancía. Si se informa el costo unitario, recalcula el costo
+    /// promedio ponderado del producto con las unidades que ya había en inventario.
+    /// </summary>
+    public async Task<ServiceResult<StockMovement>> ReceiveAsync(
+        int productId, int quantity, string? note, int userId, int? supplierId = null, decimal? unitCost = null)
     {
         if (quantity is < 1 or > MaxQuantity)
         {
             return ServiceResult<StockMovement>.Failure($"La cantidad debe estar entre 1 y {MaxQuantity:N0}.");
         }
 
-        await using var transaction = await context.Database.BeginTransactionAsync();
+        if (unitCost is <= 0 or > MaxUnitCost)
+        {
+            return ServiceResult<StockMovement>.Failure("El costo unitario debe ser mayor que cero.");
+        }
 
-        var stockAfter = await TryApplyDeltaAsync(productId, quantity);
-        if (stockAfter is null)
+        if (supplierId is not null && !await context.Suppliers.AnyAsync(s => s.Id == supplierId))
+        {
+            return ServiceResult<StockMovement>.Failure("El proveedor seleccionado no existe.");
+        }
+
+        var current = await context.Products
+            .Where(p => p.Id == productId)
+            .Select(p => new { p.Stock, p.AverageCost })
+            .SingleOrDefaultAsync();
+
+        if (current is null)
         {
             return ServiceResult<StockMovement>.Failure("El producto no existe.");
         }
 
-        var movement = CreateMovement(productId, StockMovementType.Receipt, quantity, stockAfter.Value, userId, note);
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
+        int stockAfter;
+        if (unitCost is null)
+        {
+            var applied = await TryApplyDeltaAsync(productId, quantity);
+            if (applied is null)
+            {
+                return ServiceResult<StockMovement>.Failure("El producto no existe.");
+            }
+
+            stockAfter = applied.Value;
+        }
+        else
+        {
+            var averageCost = WeightedAverageCost(current.Stock, current.AverageCost, quantity, unitCost.Value);
+            stockAfter = current.Stock + quantity;
+
+            // SQLite no opera decimales en SQL, así que el promedio se calcula en memoria y se escribe
+            // solo si el stock no cambió desde la lectura (toda entrada o venta lo modifica).
+            var updated = await context.Products
+                .Where(p => p.Id == productId && p.Stock == current.Stock)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Stock, stockAfter)
+                    .SetProperty(p => p.AverageCost, averageCost));
+
+            if (updated == 0)
+            {
+                return ServiceResult<StockMovement>.Failure("El stock cambió mientras se registraba la entrada. Intenta de nuevo.");
+            }
+        }
+
+        var movement = CreateMovement(productId, StockMovementType.Receipt, quantity, stockAfter, userId, note);
+        movement.SupplierId = supplierId;
+        movement.UnitCost = unitCost;
         context.StockMovements.Add(movement);
         await context.SaveChangesAsync();
         await transaction.CommitAsync();
 
         return ServiceResult<StockMovement>.Success(movement);
+    }
+
+    /// <summary>
+    /// Promedio ponderado entre las unidades existentes y las recibidas. Si no había costo previo
+    /// (o no quedaban unidades), el nuevo costo es el de la compra.
+    /// </summary>
+    public static decimal WeightedAverageCost(int currentStock, decimal? currentCost, int receivedQuantity, decimal receivedCost)
+    {
+        if (currentCost is null || currentStock <= 0)
+        {
+            return receivedCost;
+        }
+
+        var total = (currentStock * currentCost.Value) + (receivedQuantity * receivedCost);
+        return Math.Round(total / (currentStock + receivedQuantity), 4, MidpointRounding.AwayFromZero);
     }
 
     /// <summary>

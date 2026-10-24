@@ -22,6 +22,7 @@ builder.Services.AddRazorPages(options =>
         conventions.AuthorizeFolder("/Users", Policies.Admin);
         conventions.AuthorizeFolder("/Reports", Policies.Admin);
         conventions.AuthorizeFolder("/Inventory", Policies.Admin);
+        conventions.AuthorizeFolder("/Suppliers", Policies.Admin);
         conventions.AuthorizePage("/Products/Create", Policies.Admin);
         conventions.AuthorizePage("/Products/Edit", Policies.Admin);
         conventions.AuthorizePage("/Products/Delete", Policies.Admin);
