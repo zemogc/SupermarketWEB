@@ -83,7 +83,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseSecurityHeaders(includeContentSecurityPolicy: !app.Environment.IsDevelopment());
-app.UseHttpsRedirection();
+
+// Detrás de un proxy que termina TLS (por ejemplo, en Docker) la app solo escucha HTTP.
+if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 app.UseRequestLocalization();
 
