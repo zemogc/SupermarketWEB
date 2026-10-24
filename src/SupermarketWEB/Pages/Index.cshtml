@@ -1,25 +1,31 @@
 ﻿@page
+@using SupermarketWEB.Models
 @model IndexModel
 @{
     ViewData["Title"] = "Inicio";
 }
 
-<h1 class="h2 mb-4">Hola, @User.Identity?.Name</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h1 class="h2 mb-0">Hola, @User.Identity?.Name</h1>
+    <a asp-page="/Sales/Create" class="btn btn-success">Nueva venta</a>
+</div>
 
 <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <a asp-page="/Sales/Index" class="card stat-card h-100 text-decoration-none">
+            <div class="card-body">
+                <div class="text-muted small">Ventas de hoy</div>
+                <div class="fs-2 fw-semibold">@DisplayFormat.Currency(Model.TodaySalesTotal)</div>
+                <div class="text-muted small">@DisplayFormat.Number(Model.TodaySalesCount) venta(s)</div>
+            </div>
+        </a>
+    </div>
     <div class="col-sm-6 col-lg-3">
         <a asp-page="/Products/Index" class="card stat-card h-100 text-decoration-none">
             <div class="card-body">
                 <div class="text-muted small">Productos</div>
                 <div class="fs-2 fw-semibold">@DisplayFormat.Number(Model.ProductCount)</div>
-            </div>
-        </a>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <a asp-page="/Categories/Index" class="card stat-card h-100 text-decoration-none">
-            <div class="card-body">
-                <div class="text-muted small">Categorías</div>
-                <div class="fs-2 fw-semibold">@DisplayFormat.Number(Model.CategoryCount)</div>
+                <div class="text-muted small">en @DisplayFormat.Number(Model.CategoryCount) categorías</div>
             </div>
         </a>
     </div>
@@ -41,34 +47,73 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Productos con stock bajo</span>
-        @if (Model.OutOfStockCount > 0)
-        {
-            <span class="badge bg-danger">@Model.OutOfStockCount agotado(s)</span>
-        }
-    </div>
-    @if (Model.LowStockProducts.Count == 0)
-    {
-        <div class="card-body text-muted">Todo el inventario está por encima del mínimo.</div>
-    }
-    else
-    {
-        <ul class="list-group list-group-flush">
-            @foreach (var product in Model.LowStockProducts)
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Últimas ventas</div>
+            @if (Model.RecentSales.Count == 0)
             {
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>
-                        <a asp-page="/Products/Edit" asp-route-id="@product.Id">@product.Name</a>
-                        <span class="text-muted small">· @product.Category?.Name</span>
-                    </span>
-                    <span class="badge @(product.Stock == 0 ? "bg-danger" : "bg-warning text-dark")">@product.Stock</span>
-                </li>
+                <div class="card-body text-muted">Aún no se han registrado ventas.</div>
             }
-        </ul>
-        <div class="card-footer text-end">
-            <a asp-page="/Products/Index" asp-route-lowStock="true">Ver todos</a>
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var sale in Model.RecentSales)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <a asp-page="/Sales/Details" asp-route-id="@sale.Id">N.º @DisplayFormat.SaleNumber(sale.Id)</a>
+                                <span class="text-muted small">
+                                    · @DisplayFormat.DateTime(Model.ToLocal(sale.CreatedAtUtc))
+                                    · @(sale.Customer?.FullName ?? "Consumidor final")
+                                </span>
+                            </span>
+                            @if (sale.Status == SaleStatus.Cancelled)
+                            {
+                                <span class="badge bg-danger">Anulada</span>
+                            }
+                            else
+                            {
+                                <span class="fw-semibold">@DisplayFormat.Currency(sale.Total)</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
         </div>
-    }
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Productos con stock bajo</span>
+                @if (Model.OutOfStockCount > 0)
+                {
+                    <span class="badge bg-danger">@Model.OutOfStockCount agotado(s)</span>
+                }
+            </div>
+            @if (Model.LowStockProducts.Count == 0)
+            {
+                <div class="card-body text-muted">Todo el inventario está por encima del mínimo.</div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var product in Model.LowStockProducts)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <a asp-page="/Products/Edit" asp-route-id="@product.Id">@product.Name</a>
+                                <span class="text-muted small">· @product.Category?.Name</span>
+                            </span>
+                            <span class="badge @(product.Stock == 0 ? "bg-danger" : "bg-warning text-dark")">@product.Stock</span>
+                        </li>
+                    }
+                </ul>
+                <div class="card-footer text-end">
+                    <a asp-page="/Products/Index" asp-route-lowStock="true">Ver todos</a>
+                </div>
+            }
+        </div>
+    </div>
 </div>
