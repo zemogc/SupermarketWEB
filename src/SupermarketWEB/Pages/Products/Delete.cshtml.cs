@@ -10,6 +10,8 @@ public class DeleteModel(SupermarketContext context) : PageModel
 {
     public Product Product { get; private set; } = new();
 
+    public bool HasSales { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var product = await context.Products
@@ -23,6 +25,7 @@ public class DeleteModel(SupermarketContext context) : PageModel
         }
 
         Product = product;
+        HasSales = await context.SaleItems.AnyAsync(i => i.ProductId == id);
         return Page();
     }
 
@@ -32,6 +35,12 @@ public class DeleteModel(SupermarketContext context) : PageModel
         if (product is null)
         {
             return NotFound();
+        }
+
+        if (await context.SaleItems.AnyAsync(i => i.ProductId == id))
+        {
+            TempData["ErrorMessage"] = $"No se puede eliminar \"{product.Name}\" porque tiene ventas registradas.";
+            return RedirectToPage("./Index");
         }
 
         context.Products.Remove(product);
