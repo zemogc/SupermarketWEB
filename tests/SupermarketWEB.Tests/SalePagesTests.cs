@@ -167,6 +167,20 @@ public class SalePagesTests(SupermarketWebFactory factory) : IClassFixture<Super
     }
 
     [Fact]
+    public async Task Dashboard_ShowsRecentSales()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+        var product = await CreateProductAsync(stock: 5);
+        var location = (await SubmitSaleAsync(client, (product.Id, 1))).Headers.Location!.OriginalString;
+        var saleNumber = int.Parse(location.Split('/').Last()).ToString("D6");
+
+        var html = await client.GetHtmlAsync("/");
+
+        Assert.Contains("Ventas de hoy", html);
+        Assert.Contains($"N.º {saleNumber}", html);
+    }
+
+    [Fact]
     public async Task Details_UnknownSale_ReturnsNotFound()
     {
         var client = await CreateAuthenticatedClientAsync();
