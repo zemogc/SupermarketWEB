@@ -21,6 +21,7 @@ Aplicación web para la gestión de un supermercado construida con **ASP.NET Cor
 | Datos | Entity Framework Core 10 · SQLite · Migraciones |
 | Seguridad | Autenticación por cookies · PasswordHasher (PBKDF2) · Rate limiting |
 | Pruebas | xUnit · WebApplicationFactory · SQLite en memoria |
+| Despliegue | Docker multi-etapa · Docker Compose · Health checks |
 
 ## Puesta en marcha
 
@@ -41,6 +42,16 @@ En el entorno **Development** se crea un usuario de demostración:
 | `admin@supermarket.local` | `Admin123!` |
 
 También puedes crear tu propia cuenta desde **Registrarse**.
+
+### Con Docker
+
+Sin instalar .NET, solo con Docker:
+
+```bash
+docker compose up -d --build
+```
+
+La aplicación queda en `http://localhost:8080` con el usuario de demostración habilitado. La base de datos y las claves de sesión se guardan en el volumen `supermarket-data`, así que sobreviven a reinicios y a reconstrucciones de la imagen. El contenedor corre con un usuario sin privilegios y expone `GET /health` para monitoreo.
 
 ## Pruebas
 
@@ -147,3 +158,7 @@ dotnet ef migrations add NombreDeLaMigracion --project src/SupermarketWEB -o Dat
 | `ConnectionStrings:SupermarketDB` | Cadena de conexión SQLite | `Data Source=supermarket.db` |
 | `SeedDemoUser` | Crea el usuario de demostración | `true` en Development |
 | `RateLimiting:AuthenticationPermitsPerMinute` | Intentos de login/registro por IP y minuto | `5` |
+| `DataProtection:KeysPath` | Carpeta persistente para las claves de la cookie de sesión | Ubicación del sistema (`/app/data/keys` en Docker) |
+| `HttpsRedirection:Enabled` | Redirige HTTP a HTTPS; se desactiva detrás de un proxy con TLS | `true` (`false` en Docker) |
+
+En variables de entorno, `:` se reemplaza por `__` (por ejemplo, `ConnectionStrings__SupermarketDB`).
