@@ -20,6 +20,7 @@ builder.Services.AddRazorPages(options =>
         conventions.AuthorizeFolder("/Categories", Policies.Admin);
         conventions.AuthorizeFolder("/PayModes", Policies.Admin);
         conventions.AuthorizeFolder("/Users", Policies.Admin);
+        conventions.AuthorizeFolder("/Reports", Policies.Admin);
         conventions.AuthorizePage("/Products/Create", Policies.Admin);
         conventions.AuthorizePage("/Products/Edit", Policies.Admin);
         conventions.AuthorizePage("/Products/Delete", Policies.Admin);
@@ -49,6 +50,7 @@ builder.Services.AddDbContext<SupermarketContext>(options =>
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<SaleService>();
+builder.Services.AddScoped<ReportService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services
