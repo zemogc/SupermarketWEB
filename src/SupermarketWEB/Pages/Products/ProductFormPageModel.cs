@@ -27,12 +27,13 @@ public abstract class ProductFormPageModel(SupermarketContext context) : PageMod
     /// Copia los campos editables al producto y valida reglas que dependen de la base de datos.
     /// </summary>
     /// <param name="includeInitialStock">
-    /// Solo al crear: después, el stock cambia únicamente mediante movimientos de inventario.
+    /// Solo al crear (junto con el costo inicial): después, stock y costo cambian únicamente
+    /// mediante movimientos de inventario.
     /// </param>
     protected async Task<bool> TryApplyFormAsync(Product product, bool includeInitialStock)
     {
         var bound = includeInitialStock
-            ? await TryUpdateModelAsync(product, nameof(Product), p => p.Name, p => p.Price, p => p.CategoryId, p => p.Stock)
+            ? await TryUpdateModelAsync(product, nameof(Product), p => p.Name, p => p.Price, p => p.CategoryId, p => p.Stock, p => p.AverageCost)
             : await TryUpdateModelAsync(product, nameof(Product), p => p.Name, p => p.Price, p => p.CategoryId);
 
         if (!bound)

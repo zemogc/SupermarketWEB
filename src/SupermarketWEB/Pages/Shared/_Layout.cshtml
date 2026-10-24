@@ -38,12 +38,13 @@
                                 <li class="nav-item"><a class="nav-link @ActiveClass("/Inventory/")" aria-current="@AriaCurrent("/Inventory/")" asp-page="/Inventory/Index">Inventario</a></li>
                                 <li class="nav-item"><a class="nav-link @ActiveClass("/Reports/")" aria-current="@AriaCurrent("/Reports/")" asp-page="/Reports/Index">Reportes</a></li>
                                 <li class="nav-item dropdown">
-                                    <button type="button" class="nav-link dropdown-toggle btn btn-link @ActiveClass("/Categories/", "/PayModes/", "/Users/")"
+                                    <button type="button" class="nav-link dropdown-toggle btn btn-link @ActiveClass("/Categories/", "/Suppliers/", "/PayModes/", "/Users/")"
                                             data-bs-toggle="dropdown" aria-expanded="false">
                                         Administración
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item @ActiveClass("/Categories/")" asp-page="/Categories/Index">Categorías</a></li>
+                                        <li><a class="dropdown-item @ActiveClass("/Suppliers/")" asp-page="/Suppliers/Index">Proveedores</a></li>
                                         <li><a class="dropdown-item @ActiveClass("/PayModes/")" asp-page="/PayModes/Index">Medios de pago</a></li>
                                         <li><a class="dropdown-item @ActiveClass("/Users/")" asp-page="/Users/Index">Usuarios</a></li>
                                     </ul>

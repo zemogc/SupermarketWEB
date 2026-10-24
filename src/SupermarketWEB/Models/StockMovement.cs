@@ -39,6 +39,14 @@ public class StockMovement
 
     public int? SaleId { get; set; }
 
+    /// <summary>Proveedor de una entrada de mercancía.</summary>
+    public int? SupplierId { get; set; }
+
+    public Supplier? Supplier { get; set; }
+
+    /// <summary>Costo unitario de compra informado en una entrada o en el stock inicial.</summary>
+    public decimal? UnitCost { get; set; }
+
     public Sale? Sale { get; set; }
 
     /// <summary>Usuario que originó el movimiento; nulo para los saldos iniciales cargados por el sistema.</summary>

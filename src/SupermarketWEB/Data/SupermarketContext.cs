@@ -21,6 +21,8 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
 
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
 
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
@@ -34,8 +36,10 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
         {
             entity.Property(p => p.Name).HasMaxLength(150).IsRequired();
             entity.Property(p => p.Price).HasPrecision(18, 2);
+            entity.Property(p => p.AverageCost).HasPrecision(18, 4);
             entity.HasIndex(p => p.Name);
             entity.Ignore(p => p.IsLowStock);
+            entity.Ignore(p => p.Margin);
 
             // Una categoría con productos no puede eliminarse sin reasignarlos antes.
             entity.HasOne(p => p.Category)
@@ -90,7 +94,9 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
         {
             entity.Property(i => i.ProductName).HasMaxLength(150).IsRequired();
             entity.Property(i => i.UnitPrice).HasPrecision(18, 2);
+            entity.Property(i => i.UnitCost).HasPrecision(18, 4);
             entity.Ignore(i => i.Subtotal);
+            entity.Ignore(i => i.Profit);
 
             entity.HasOne(i => i.Sale).WithMany(s => s.Items).HasForeignKey(i => i.SaleId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(i => i.Product).WithMany().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Restrict);
@@ -106,6 +112,19 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
             entity.HasOne(m => m.Product).WithMany().HasForeignKey(m => m.ProductId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(m => m.Sale).WithMany().HasForeignKey(m => m.SaleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(m => m.User).WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(m => m.Supplier).WithMany().HasForeignKey(m => m.SupplierId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(m => m.UnitCost).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<Supplier>(entity =>
+        {
+            entity.Property(s => s.Name).HasMaxLength(150).IsRequired();
+            entity.Property(s => s.TaxId).HasMaxLength(20);
+            entity.Property(s => s.ContactName).HasMaxLength(100);
+            entity.Property(s => s.Phone).HasMaxLength(20);
+            entity.Property(s => s.Email).HasMaxLength(150);
+            entity.HasIndex(s => s.Name).IsUnique();
+            entity.HasIndex(s => s.TaxId).IsUnique();
         });
     }
 }

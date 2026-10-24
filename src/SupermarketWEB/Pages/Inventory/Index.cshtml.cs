@@ -52,7 +52,9 @@ public class IndexModel(SupermarketContext context, TimeProvider timeProvider) :
                 m.StockAfter,
                 m.Note,
                 m.SaleId,
-                m.User != null ? m.User.FullName : null));
+                m.User != null ? m.User.FullName : null,
+                m.Supplier != null ? m.Supplier.Name : null,
+                m.UnitCost));
 
         Movements = await PagedList<MovementRow>.CreateAsync(rows, PageNumber, PageSize);
 
@@ -82,5 +84,7 @@ public class IndexModel(SupermarketContext context, TimeProvider timeProvider) :
         int StockAfter,
         string? Note,
         int? SaleId,
-        string? UserName);
+        string? UserName,
+        string? SupplierName,
+        decimal? UnitCost);
 }

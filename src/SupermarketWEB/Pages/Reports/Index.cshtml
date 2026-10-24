@@ -55,12 +55,22 @@
     <div class="col-sm-6 col-lg-3">
         <div class="card stat-card h-100">
             <div class="card-body">
-                <div class="text-muted small">Unidades vendidas</div>
-                <div class="fs-3 fw-semibold">@DisplayFormat.Number(report.Summary.UnitCount)</div>
+                <div class="text-muted small">Utilidad bruta</div>
+                <div class="fs-3 fw-semibold">@DisplayFormat.Currency(report.Summary.GrossProfit)</div>
+                <div class="text-muted small">Margen @DisplayFormat.Percent(report.Summary.Margin) · @DisplayFormat.Number(report.Summary.UnitCount) unidades</div>
             </div>
         </div>
     </div>
 </div>
+
+@if (report.Summary.HasUncostedRevenue && report.Summary.SaleCount > 0)
+{
+    <div class="alert alert-light border small">
+        @DisplayFormat.Currency(report.Summary.Revenue - report.Summary.CostedRevenue) de ingresos corresponden a productos
+        sin costo registrado y no se incluyen en la utilidad ni en el margen. Registra el costo en las
+        <a asp-page="/Inventory/Receive">entradas de mercancía</a> para completarlos.
+    </div>
+}
 
 @if (report.Summary.SaleCount == 0)
 {
@@ -79,6 +89,7 @@ else
                                 <th>Producto</th>
                                 <th class="text-end">Unidades</th>
                                 <th class="text-end">Ingresos</th>
+                                <th class="text-end">Margen</th>
                                 <th class="report-bar-cell"><span class="visually-hidden">Participación</span></th>
                             </tr>
                         </thead>
@@ -89,6 +100,7 @@ else
                                     <td>@product.ProductName</td>
                                     <td class="text-end">@DisplayFormat.Number(product.Units)</td>
                                     <td class="text-end">@DisplayFormat.Currency(product.Revenue)</td>
+                                    <td class="text-end @(product.Margin < 0 ? "text-danger" : null)">@DisplayFormat.Percent(product.Margin)</td>
                                     <td><progress class="report-bar" value="@product.Revenue" max="@maxProductRevenue"></progress></td>
                                 </tr>
                             }

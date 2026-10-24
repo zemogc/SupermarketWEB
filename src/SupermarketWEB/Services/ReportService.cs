@@ -5,14 +5,24 @@ using SupermarketWEB.Models;
 
 namespace SupermarketWEB.Services;
 
-public record SalesSummary(int SaleCount, int UnitCount, decimal Revenue)
+/// <param name="GrossProfit">Utilidad bruta de las líneas con costo conocido.</param>
+/// <param name="CostedRevenue">Ingresos de las líneas con costo conocido (base del margen).</param>
+public record SalesSummary(int SaleCount, int UnitCount, decimal Revenue, decimal GrossProfit = 0, decimal CostedRevenue = 0)
 {
     public decimal AverageTicket => SaleCount == 0 ? 0 : Math.Round(Revenue / SaleCount, 2);
+
+    public decimal? Margin => CostedRevenue == 0 ? null : GrossProfit / CostedRevenue;
+
+    /// <summary>Hay ventas de productos sin costo registrado, que no entran en la utilidad.</summary>
+    public bool HasUncostedRevenue => CostedRevenue < Revenue;
 }
 
 public record DailySales(DateOnly Day, int SaleCount, decimal Revenue);
 
-public record ProductSales(int ProductId, string ProductName, int Units, decimal Revenue);
+public record ProductSales(int ProductId, string ProductName, int Units, decimal Revenue, decimal? Profit = null, decimal CostedRevenue = 0)
+{
+    public decimal? Margin => CostedRevenue == 0 ? null : Profit / CostedRevenue;
+}
 
 public record PayModeSales(string PayModeName, int SaleCount, decimal Revenue);
 
@@ -33,7 +43,9 @@ public record SaleLineExport(
     string ProductName,
     int Quantity,
     decimal UnitPrice,
-    decimal Subtotal);
+    decimal Subtotal,
+    decimal? UnitCost = null,
+    decimal? Profit = null);
 
 /// <summary>
 /// Reportes sobre las ventas completadas de un rango de días locales. Las anuladas no cuentan.
@@ -56,8 +68,11 @@ public class ReportService(SupermarketContext context, TimeProvider timeProvider
                 i.ProductName,
                 i.Quantity,
                 i.UnitPrice,
+                i.UnitCost,
             })
             .ToListAsync();
+
+        var costed = lines.Where(l => l.UnitCost is not null).ToList();
 
         var sales = lines
             .GroupBy(l => l.Id)
@@ -69,7 +84,12 @@ public class ReportService(SupermarketContext context, TimeProvider timeProvider
             })
             .ToList();
 
-        var summary = new SalesSummary(sales.Count, lines.Sum(l => l.Quantity), sales.Sum(s => s.Revenue));
+        var summary = new SalesSummary(
+            sales.Count,
+            lines.Sum(l => l.Quantity),
+            sales.Sum(s => s.Revenue),
+            costed.Sum(l => (l.UnitPrice - l.UnitCost!.Value) * l.Quantity),
+            costed.Sum(l => l.UnitPrice * l.Quantity));
 
         var byDay = sales
             .GroupBy(s => s.Day)
@@ -84,7 +104,11 @@ public class ReportService(SupermarketContext context, TimeProvider timeProvider
                 g.Key,
                 g.MaxBy(l => l.CreatedAtUtc)!.ProductName,
                 g.Sum(l => l.Quantity),
-                g.Sum(l => l.UnitPrice * l.Quantity)))
+                g.Sum(l => l.UnitPrice * l.Quantity),
+                g.Any(l => l.UnitCost is not null)
+                    ? g.Where(l => l.UnitCost is not null).Sum(l => (l.UnitPrice - l.UnitCost!.Value) * l.Quantity)
+                    : null,
+                g.Where(l => l.UnitCost is not null).Sum(l => l.UnitPrice * l.Quantity)))
             .OrderByDescending(p => p.Revenue)
             .ThenBy(p => p.ProductName)
             .ToList();
@@ -111,6 +135,7 @@ public class ReportService(SupermarketContext context, TimeProvider timeProvider
                 i.ProductName,
                 i.Quantity,
                 i.UnitPrice,
+                i.UnitCost,
             })
             .ToListAsync();
 
@@ -127,7 +152,9 @@ public class ReportService(SupermarketContext context, TimeProvider timeProvider
                 r.ProductName,
                 r.Quantity,
                 r.UnitPrice,
-                r.UnitPrice * r.Quantity))
+                r.UnitPrice * r.Quantity,
+                r.UnitCost,
+                r.UnitCost is { } cost ? (r.UnitPrice - cost) * r.Quantity : null))
             .ToList();
     }
 

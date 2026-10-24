@@ -61,6 +61,8 @@ public class RoleTests(SupermarketWebFactory factory) : IClassFixture<Supermarke
     [InlineData("/Inventory")]
     [InlineData("/Inventory/Receive")]
     [InlineData("/Inventory/Adjust")]
+    [InlineData("/Suppliers")]
+    [InlineData("/Suppliers/Create")]
     public async Task Cashier_IsDeniedAdminPages(string url)
     {
         var (client, _) = await CreateCashierAsync();

@@ -113,6 +113,10 @@ namespace SupermarketWEB.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("AverageCost")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
@@ -200,6 +204,10 @@ namespace SupermarketWEB.Data.Migrations
                     b.Property<int>("SaleId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
@@ -238,9 +246,16 @@ namespace SupermarketWEB.Data.Migrations
                     b.Property<int>("StockAfter")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("SupplierId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("UserId")
@@ -250,11 +265,51 @@ namespace SupermarketWEB.Data.Migrations
 
                     b.HasIndex("SaleId");
 
+                    b.HasIndex("SupplierId");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("ProductId", "CreatedAtUtc");
 
                     b.ToTable("StockMovements");
+                });
+
+            modelBuilder.Entity("SupermarketWEB.Models.Supplier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("TaxId")
+                        .IsUnique();
+
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("SupermarketWEB.Models.User", b =>
@@ -372,6 +427,11 @@ namespace SupermarketWEB.Data.Migrations
                         .HasForeignKey("SaleId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("SupermarketWEB.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SupermarketWEB.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -380,6 +440,8 @@ namespace SupermarketWEB.Data.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Sale");
+
+                    b.Navigation("Supplier");
 
                     b.Navigation("User");
                 });

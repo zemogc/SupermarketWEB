@@ -216,8 +216,10 @@ public class ReportPagesTests(SupermarketWebFactory factory) : IClassFixture<Sup
         Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
         Assert.Contains($"ventas_{today.Replace("-", "")}", response.Content.Headers.ContentDisposition?.FileName);
         Assert.Equal(Encoding.UTF8.GetPreamble(), bytes[..3]);
-        Assert.StartsWith("﻿Venta,Fecha,Cliente,Medio de pago,Cajero,Producto,Cantidad,Precio unitario,Subtotal\r\n", csv);
-        Assert.Contains(",Consumidor final,Efectivo,Administrador,Pan tajado,2,6800.00,13600.00", csv);
+        Assert.StartsWith("﻿Venta,Fecha,Cliente,Medio de pago,Cajero,Producto,Cantidad,Precio unitario,Subtotal,Costo unitario,Utilidad\r\n", csv);
+
+        // Sin costo registrado, las columnas de costo y utilidad quedan vacías.
+        Assert.Contains(",Consumidor final,Efectivo,Administrador,Pan tajado,2,6800.00,13600.00,,\r\n", csv);
     }
 
     [Fact]

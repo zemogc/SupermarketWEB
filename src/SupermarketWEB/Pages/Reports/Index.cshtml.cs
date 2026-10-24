@@ -30,11 +30,11 @@ public class IndexModel(ReportService reportService, TimeProvider timeProvider) 
         var lines = await reportService.GetSaleLinesAsync(from, to);
 
         var csv = CsvWriter.Write(
-            ["Venta", "Fecha", "Cliente", "Medio de pago", "Cajero", "Producto", "Cantidad", "Precio unitario", "Subtotal"],
+            ["Venta", "Fecha", "Cliente", "Medio de pago", "Cajero", "Producto", "Cantidad", "Precio unitario", "Subtotal", "Costo unitario", "Utilidad"],
             lines.Select(l => new object?[]
             {
                 l.SaleId, l.CreatedAtLocal, l.CustomerName, l.PayModeName, l.CashierName,
-                l.ProductName, l.Quantity, l.UnitPrice, l.Subtotal,
+                l.ProductName, l.Quantity, l.UnitPrice, l.Subtotal, l.UnitCost, l.Profit,
             }));
 
         // El BOM UTF-8 hace que Excel reconozca las tildes al abrir el archivo.
