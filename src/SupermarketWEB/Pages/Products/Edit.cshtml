@@ -14,6 +14,20 @@
             <a asp-page="Index" class="btn btn-link">Cancelar</a>
         </form>
     </div>
+    <div class="col-lg-4 offset-lg-1 mt-4 mt-lg-0">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Stock actual</div>
+                <div class="fs-2 fw-semibold mb-3">@DisplayFormat.Number(Model.CurrentStock)</div>
+                <p class="small text-muted">El stock cambia solo con movimientos registrados, para conservar el historial.</p>
+                <div class="d-grid gap-2">
+                    <a asp-page="/Inventory/Receive" asp-route-productId="@Model.Product.Id" class="btn btn-outline-success btn-sm">Registrar entrada</a>
+                    <a asp-page="/Inventory/Adjust" asp-route-productId="@Model.Product.Id" class="btn btn-outline-secondary btn-sm">Ajustar por conteo</a>
+                    <a asp-page="/Inventory/Index" asp-route-productId="@Model.Product.Id" class="btn btn-link btn-sm">Ver movimientos</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

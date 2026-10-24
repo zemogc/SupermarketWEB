@@ -11,7 +11,7 @@ public record RegisterSaleRequest(int? CustomerId, int PayModeId, int UserId, IR
 /// <summary>
 /// Registra y anula ventas manteniendo el inventario consistente.
 /// </summary>
-public class SaleService(SupermarketContext context, TimeProvider timeProvider)
+public class SaleService(SupermarketContext context, InventoryService inventory, TimeProvider timeProvider)
 {
     public async Task<ServiceResult<Sale>> RegisterAsync(RegisterSaleRequest request)
     {
@@ -68,20 +68,22 @@ public class SaleService(SupermarketContext context, TimeProvider timeProvider)
 
         await using var transaction = await context.Database.BeginTransactionAsync();
 
+        var stockAfter = new Dictionary<int, int>();
+
         foreach (var line in lines)
         {
             // Descuento condicional y atómico: si otra venta consumió el stock entre la
             // validación y este punto, no se actualiza ninguna fila y la venta se aborta.
-            var updated = await context.Products
-                .Where(p => p.Id == line.ProductId && p.Stock >= line.Quantity)
-                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock - line.Quantity));
+            var remaining = await inventory.TryApplyDeltaAsync(line.ProductId, -line.Quantity);
 
-            if (updated == 0)
+            if (remaining is null)
             {
                 await transaction.RollbackAsync();
                 return ServiceResult<Sale>.Failure(
                     $"El stock de \"{products[line.ProductId].Name}\" cambió mientras se registraba la venta. Intenta de nuevo.");
             }
+
+            stockAfter[line.ProductId] = remaining.Value;
         }
 
         var sale = new Sale
@@ -101,13 +103,15 @@ public class SaleService(SupermarketContext context, TimeProvider timeProvider)
         sale.Total = sale.Items.Sum(i => i.Subtotal);
 
         context.Sales.Add(sale);
+        context.StockMovements.AddRange(lines.Select(l => inventory.CreateMovement(
+            l.ProductId, StockMovementType.Sale, -l.Quantity, stockAfter[l.ProductId], request.UserId, sale: sale)));
         await context.SaveChangesAsync();
         await transaction.CommitAsync();
 
         return ServiceResult<Sale>.Success(sale);
     }
 
-    public async Task<ServiceResult<Sale>> CancelAsync(int saleId)
+    public async Task<ServiceResult<Sale>> CancelAsync(int saleId, int userId)
     {
         var sale = await context.Sales.Include(s => s.Items).FirstOrDefaultAsync(s => s.Id == saleId);
         if (sale is null)
@@ -124,9 +128,13 @@ public class SaleService(SupermarketContext context, TimeProvider timeProvider)
 
         foreach (var item in sale.Items)
         {
-            await context.Products
-                .Where(p => p.Id == item.ProductId)
-                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock + item.Quantity));
+            // Sumar nunca deja el stock negativo, así que el resultado solo es nulo si el
+            // producto desapareció, cosa que impide la restricción de clave foránea.
+            var stockAfter = await inventory.TryApplyDeltaAsync(item.ProductId, item.Quantity)
+                ?? throw new InvalidOperationException($"No se encontró el producto {item.ProductId} de la venta {saleId}.");
+
+            context.StockMovements.Add(inventory.CreateMovement(
+                item.ProductId, StockMovementType.SaleCancellation, item.Quantity, stockAfter, userId, sale: sale));
         }
 
         sale.Status = SaleStatus.Cancelled;

@@ -21,6 +21,7 @@ builder.Services.AddRazorPages(options =>
         conventions.AuthorizeFolder("/PayModes", Policies.Admin);
         conventions.AuthorizeFolder("/Users", Policies.Admin);
         conventions.AuthorizeFolder("/Reports", Policies.Admin);
+        conventions.AuthorizeFolder("/Inventory", Policies.Admin);
         conventions.AuthorizePage("/Products/Create", Policies.Admin);
         conventions.AuthorizePage("/Products/Edit", Policies.Admin);
         conventions.AuthorizePage("/Products/Delete", Policies.Admin);
@@ -49,6 +50,7 @@ builder.Services.AddDbContext<SupermarketContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SupermarketDB")));
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<SaleService>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddSingleton(TimeProvider.System);
