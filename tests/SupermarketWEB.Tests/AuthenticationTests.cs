@@ -123,6 +123,17 @@ public class AuthenticationTests(SupermarketWebFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task HealthEndpoint_IsPublicAndReportsHealthy()
+    {
+        var client = factory.CreateBrowserClient();
+
+        var response = await client.GetAsync("/health");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async Task Responses_IncludeSecurityHeaders()
     {
         var client = factory.CreateBrowserClient();

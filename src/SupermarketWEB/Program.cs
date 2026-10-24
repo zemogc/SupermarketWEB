@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,18 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services.AddAuthenticationRateLimiting(
     builder.Configuration.GetValue("RateLimiting:AuthenticationPermitsPerMinute", 5));
 
+// Las claves que cifran la cookie de sesión deben sobrevivir a reinicios (por ejemplo, en un
+// contenedor); si no se configura una ruta se usa la ubicación por defecto del sistema.
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    builder.Services.AddDataProtection()
+        .SetApplicationName("SupermarketWEB")
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
+}
+
+builder.Services.AddHealthChecks().AddDbContextCheck<SupermarketContext>("database");
+
 var app = builder.Build();
 
 await DbInitializer.InitializeAsync(app.Services, app.Configuration.GetValue<bool>("SeedDemoUser"));
@@ -70,7 +83,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseSecurityHeaders(includeContentSecurityPolicy: !app.Environment.IsDevelopment());
-app.UseHttpsRedirection();
+
+// Detrás de un proxy que termina TLS (por ejemplo, en Docker) la app solo escucha HTTP.
+if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 app.UseRequestLocalization();
 
@@ -81,6 +100,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapHealthChecks("/health").AllowAnonymous().DisableRateLimiting();
 
 await app.RunAsync();
 
