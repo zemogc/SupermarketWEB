@@ -5,6 +5,7 @@ Aplicación web para la gestión de un supermercado construida con **ASP.NET Cor
 ## Funcionalidades
 
 - **Autenticación** con cookies: registro, inicio y cierre de sesión. Todas las páginas requieren sesión salvo las públicas.
+- **Mi cuenta**: edición del perfil y cambio de contraseña, que cierra las sesiones abiertas en otros dispositivos.
 - **Roles** de administrador y cajero, con administración de usuarios. Un cambio de rol se aplica de inmediato y cierra las sesiones abiertas del usuario.
 - **Ventas**: registro con varios productos, cliente opcional (consumidor final) y medio de pago; descuento automático del stock, comprobante imprimible, anulación con devolución del inventario e historial filtrable por fechas.
 - **Inventario (kardex)**: cada cambio de stock queda registrado con su tipo (saldo inicial, entrada, ajuste, venta o anulación), usuario, motivo y saldo resultante. Entradas de mercancía y ajustes por conteo físico con motivo obligatorio.
