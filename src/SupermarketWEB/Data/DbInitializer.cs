@@ -12,7 +12,7 @@ public static class DbInitializer
     public const string DemoUserEmail = "admin@supermarket.local";
     public const string DemoUserPassword = "Admin123!";
 
-    public static async Task InitializeAsync(IServiceProvider services, bool seedDemoUser)
+    public static async Task InitializeAsync(IServiceProvider services, bool seedDemoUser, bool seedDemoData = false)
     {
         using var scope = services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<SupermarketContext>();
@@ -55,6 +55,14 @@ public static class DbInitializer
         }
 
         await context.SaveChangesAsync();
+
+        if (seedDemoData)
+        {
+            await DemoDataSeeder.SeedAsync(
+                context,
+                scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>(),
+                scope.ServiceProvider.GetRequiredService<TimeProvider>());
+        }
     }
 
     private static void SeedCatalog(SupermarketContext context)
@@ -63,6 +71,8 @@ public static class DbInitializer
         var bakery = new Category { Name = "Panadería", Description = "Pan y productos horneados" };
         var produce = new Category { Name = "Frutas y verduras" };
         var cleaning = new Category { Name = "Aseo", Description = "Productos de limpieza para el hogar" };
+        var pantry = new Category { Name = "Despensa", Description = "Granos, aceites y abarrotes" };
+        var drinks = new Category { Name = "Bebidas", Description = "Café, jugos y gaseosas" };
 
         Product[] products =
         [
@@ -73,9 +83,17 @@ public static class DbInitializer
             new() { Name = "Manzana roja (kg)", Price = 8900m, Stock = 30, Category = produce },
             new() { Name = "Tomate (kg)", Price = 5400m, Stock = 0, Category = produce },
             new() { Name = "Detergente líquido 2 L", Price = 21500m, Stock = 12, Category = cleaning },
+            new() { Name = "Jabón de baño x3", Price = 9800m, Stock = 20, Category = cleaning },
+            new() { Name = "Arroz 1 kg", Price = 4200m, Stock = 60, Category = pantry },
+            new() { Name = "Aceite vegetal 1 L", Price = 11900m, Stock = 18, Category = pantry },
+            new() { Name = "Huevos x12", Price = 13500m, Stock = 24, Category = pantry },
+            new() { Name = "Pasta spaghetti 500 g", Price = 3900m, Stock = 35, Category = pantry },
+            new() { Name = "Café molido 500 g", Price = 18900m, Stock = 16, Category = drinks },
+            new() { Name = "Jugo de naranja 1 L", Price = 7500m, Stock = 22, Category = drinks },
+            new() { Name = "Gaseosa 1.5 L", Price = 6200m, Stock = 30, Category = drinks },
         ];
 
-        context.Categories.AddRange(dairy, bakery, produce, cleaning);
+        context.Categories.AddRange(dairy, bakery, produce, cleaning, pantry, drinks);
         context.Products.AddRange(products);
 
         // El kardex arranca con el saldo inicial de cada producto.
