@@ -92,7 +92,10 @@ builder.Services.AddHealthChecks().AddDbContextCheck<SupermarketContext>("databa
 
 var app = builder.Build();
 
-await DbInitializer.InitializeAsync(app.Services, app.Configuration.GetValue<bool>("SeedDemoUser"));
+await DbInitializer.InitializeAsync(
+    app.Services,
+    seedDemoUser: app.Configuration.GetValue<bool>("SeedDemoUser"),
+    seedDemoData: app.Configuration.GetValue<bool>("SeedDemoData"));
 
 if (!app.Environment.IsDevelopment())
 {
