@@ -1,0 +1,17 @@
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Ocurrió un error</h1>
+<p>No pudimos procesar tu solicitud. Intenta de nuevo en unos minutos.</p>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Id de la solicitud:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<a asp-page="/Index" class="btn btn-outline-secondary">Volver al inicio</a>
