@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SupermarketWEB.Data;
 using SupermarketWEB.Infrastructure;
@@ -11,6 +12,7 @@ using SupermarketWEB.Models;
 namespace SupermarketWEB.Pages.Account;
 
 [AllowAnonymous]
+[EnableRateLimiting(RateLimitPolicies.Authentication)]
 public class RegisterModel(SupermarketContext context, IPasswordHasher<User> passwordHasher) : PageModel
 {
     [BindProperty]
