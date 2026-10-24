@@ -51,7 +51,10 @@ else
                         <td>@DisplayFormat.Date(customer.Birthday)</td>
                         <td class="text-end text-nowrap">
                             <a asp-page="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-outline-primary">Editar</a>
-                            <a asp-page="Delete" asp-route-id="@customer.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            @if (User.IsInRole(Policies.AdminRole))
+                            {
+                                <a asp-page="Delete" asp-route-id="@customer.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            }
                         </td>
                     </tr>
                 }

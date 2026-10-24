@@ -6,7 +6,10 @@
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h2 mb-0">@ViewData["Title"]</h1>
-    <a asp-page="Create" class="btn btn-success">Nuevo producto</a>
+    @if (User.IsInRole(Policies.AdminRole))
+    {
+        <a asp-page="Create" class="btn btn-success">Nuevo producto</a>
+    }
 </div>
 
 <form method="get" class="row g-2 align-items-center mb-3" role="search">
@@ -69,8 +72,11 @@ else
                             }
                         </td>
                         <td class="text-end text-nowrap">
-                            <a asp-page="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">Editar</a>
-                            <a asp-page="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            @if (User.IsInRole(Policies.AdminRole))
+                            {
+                                <a asp-page="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a asp-page="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            }
                         </td>
                     </tr>
                 }

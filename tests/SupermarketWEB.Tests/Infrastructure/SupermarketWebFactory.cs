@@ -9,7 +9,7 @@ namespace SupermarketWEB.Tests.Infrastructure;
 /// <summary>
 /// Levanta la aplicación completa sobre una base SQLite en memoria, aislada por instancia.
 /// </summary>
-public sealed class SupermarketWebFactory : WebApplicationFactory<Program>
+public class SupermarketWebFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString = $"Data Source=tests-{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
 
@@ -21,6 +21,11 @@ public sealed class SupermarketWebFactory : WebApplicationFactory<Program>
         _keepAliveConnection = new SqliteConnection(_connectionString);
         _keepAliveConnection.Open();
     }
+
+    /// <summary>
+    /// Si es falso, la base arranca sin usuarios (solo con el catálogo de ejemplo).
+    /// </summary>
+    protected virtual bool SeedDemoUser => true;
 
     public HttpClient CreateBrowserClient() =>
         CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -36,7 +41,7 @@ public sealed class SupermarketWebFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:SupermarketDB", _connectionString);
-        builder.UseSetting("SeedDemoUser", "true");
+        builder.UseSetting("SeedDemoUser", SeedDemoUser.ToString());
         builder.UseSetting("RateLimiting:AuthenticationPermitsPerMinute", "1000");
     }
 
@@ -49,4 +54,9 @@ public sealed class SupermarketWebFactory : WebApplicationFactory<Program>
             _keepAliveConnection.Dispose();
         }
     }
+}
+
+public sealed class EmptyUsersWebFactory : SupermarketWebFactory
+{
+    protected override bool SeedDemoUser => false;
 }
