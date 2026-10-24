@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    image: supermarketweb
+    ports:
+      - "8080:8080"
+    environment:
+      # Crea el usuario de demostración (admin@supermarket.local / Admin123!) si no hay usuarios.
+      SeedDemoUser: "true"
+    volumes:
+      - supermarket-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  supermarket-data:
