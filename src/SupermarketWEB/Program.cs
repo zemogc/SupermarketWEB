@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using SupermarketWEB.Data;
 using SupermarketWEB.Infrastructure;
 using SupermarketWEB.Models;
+using SupermarketWEB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,8 @@ builder.Services.AddDbContext<SupermarketContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SupermarketDB")));
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<SaleService>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
