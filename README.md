@@ -2,6 +2,25 @@
 
 Aplicación web para la gestión de un supermercado construida con **ASP.NET Core Razor Pages (.NET 10)** y **Entity Framework Core**. Permite registrar ventas con control de inventario y administrar categorías, productos, clientes y medios de pago, con autenticación de usuarios y un panel con indicadores del negocio.
 
+![Panel de inicio](docs/screenshots/dashboard.png)
+
+## Capturas
+
+Tomadas de la aplicación en modo Production con los [datos de demostración](#puesta-en-marcha), mediante un [recorrido automatizado en navegador real](tools/e2e).
+
+| | |
+| :---: | :---: |
+| **Nueva venta**: filas dinámicas con subtotales en vivo | **Comprobante** imprimible, con opción de anular |
+| ![Nueva venta](docs/screenshots/nueva-venta.png) | ![Comprobante de venta](docs/screenshots/comprobante.png) |
+| **Reportes**: ingresos, más vendidos y medios de pago | **Kardex**: cada movimiento con su saldo y usuario |
+| ![Reportes de ventas](docs/screenshots/reportes.png) | ![Movimientos de inventario](docs/screenshots/inventario.png) |
+| **Historial de ventas** con anuladas y totales del periodo | **Productos** con alertas de stock bajo y agotado |
+| ![Historial de ventas](docs/screenshots/ventas.png) | ![Productos](docs/screenshots/productos.png) |
+| **Usuarios**: roles y activación de cuentas | **Menú de administración** (solo administradores) |
+| ![Usuarios](docs/screenshots/usuarios.png) | ![Menú de administración](docs/screenshots/menu-administracion.png) |
+| **Inicio de sesión** | **Vista móvil** del cajero |
+| ![Inicio de sesión](docs/screenshots/login.png) | <img src="docs/screenshots/movil-cajero.png" alt="Vista móvil del cajero" width="260"> |
+
 ## Funcionalidades
 
 - **Autenticación** con cookies: registro, inicio y cierre de sesión. Todas las páginas requieren sesión salvo las públicas.
@@ -24,7 +43,7 @@ Aplicación web para la gestión de un supermercado construida con **ASP.NET Cor
 | Web | ASP.NET Core 10 · Razor Pages · Bootstrap 5 |
 | Datos | Entity Framework Core 10 · SQLite · Migraciones |
 | Seguridad | Autenticación por cookies · PasswordHasher (PBKDF2) · Rate limiting |
-| Pruebas | xUnit · WebApplicationFactory · SQLite en memoria |
+| Pruebas | xUnit · WebApplicationFactory · SQLite en memoria · Playwright (recorrido en navegador) |
 | Despliegue | Docker multi-etapa · Docker Compose · Health checks |
 
 ## Puesta en marcha
@@ -81,6 +100,8 @@ dotnet test
 
 La suite incluye pruebas unitarias y de integración que levantan la aplicación completa en memoria y recorren los flujos reales a través de HTTP: inicio de sesión, protección de páginas, formularios con token antiforgery, validaciones, reglas de negocio y cabeceras de seguridad.
 
+Además, [`tools/e2e`](tools/e2e) contiene un recorrido en navegador real (Edge con Playwright) que prueba el JavaScript del formulario de ventas, falla ante errores de consola o violaciones de la Content-Security-Policy y regenera las capturas de este README. Ese recorrido detectó dos problemas que las pruebas HTTP no veían: una barra de navegación que se partía en varias líneas y un historial de demostración con fechas fuera de orden.
+
 ## Estructura
 
 ```text
@@ -92,9 +113,11 @@ SupermarketWEB/
 │   ├── Pages/             # Razor Pages agrupadas por módulo
 │   ├── Services/          # Lógica de negocio que abarca varias entidades (ventas, inventario, reportes)
 │   └── wwwroot/           # Recursos estáticos
-└── tests/SupermarketWEB.Tests/
-    ├── Infrastructure/    # WebApplicationFactory y helpers de HTTP
-    └── *Tests.cs          # Pruebas por módulo
+├── tests/SupermarketWEB.Tests/
+│   ├── Infrastructure/    # WebApplicationFactory y helpers de HTTP
+│   └── *Tests.cs          # Pruebas por módulo
+├── tools/e2e/             # Recorrido en navegador real y generación de capturas
+└── docs/screenshots/      # Capturas usadas en este README
 ```
 
 ## Modelo de datos
