@@ -1,12 +1,19 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SupermarketWEB.Data;
+using SupermarketWEB.Infrastructure;
 using SupermarketWEB.Models;
 
 namespace SupermarketWEB.Pages;
 
-public class IndexModel(SupermarketContext context) : PageModel
+public class IndexModel(SupermarketContext context, TimeProvider timeProvider) : PageModel
 {
+    public int TodaySalesCount { get; private set; }
+
+    public decimal TodaySalesTotal { get; private set; }
+
+    public IReadOnlyList<Sale> RecentSales { get; private set; } = [];
+
     public int CategoryCount { get; private set; }
 
     public int ProductCount { get; private set; }
@@ -39,5 +46,23 @@ public class IndexModel(SupermarketContext context) : PageModel
             .ThenBy(p => p.Name)
             .Take(5)
             .ToListAsync();
+
+        var startOfTodayUtc = timeProvider.StartOfDayUtc(timeProvider.Today());
+        var todayTotals = await context.Sales
+            .Where(s => s.Status == SaleStatus.Completed && s.CreatedAtUtc >= startOfTodayUtc)
+            .Select(s => s.Total)
+            .ToListAsync();
+        TodaySalesCount = todayTotals.Count;
+        TodaySalesTotal = todayTotals.Sum();
+
+        RecentSales = await context.Sales
+            .AsNoTracking()
+            .Include(s => s.Customer)
+            .OrderByDescending(s => s.CreatedAtUtc)
+            .ThenByDescending(s => s.Id)
+            .Take(5)
+            .ToListAsync();
     }
+
+    public DateTime ToLocal(DateTime utc) => timeProvider.ToLocal(utc);
 }

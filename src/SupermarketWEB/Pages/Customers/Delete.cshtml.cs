@@ -10,6 +10,8 @@ public class DeleteModel(SupermarketContext context) : PageModel
 {
     public Customer Customer { get; private set; } = new();
 
+    public bool HasSales { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var customer = await context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
@@ -19,6 +21,7 @@ public class DeleteModel(SupermarketContext context) : PageModel
         }
 
         Customer = customer;
+        HasSales = await context.Sales.AnyAsync(s => s.CustomerId == id);
         return Page();
     }
 
@@ -28,6 +31,12 @@ public class DeleteModel(SupermarketContext context) : PageModel
         if (customer is null)
         {
             return NotFound();
+        }
+
+        if (await context.Sales.AnyAsync(s => s.CustomerId == id))
+        {
+            TempData["ErrorMessage"] = $"No se puede eliminar \"{customer.FullName}\" porque tiene ventas registradas.";
+            return RedirectToPage("./Index");
         }
 
         context.Customers.Remove(customer);

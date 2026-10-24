@@ -15,6 +15,10 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<Sale> Sales => Set<Sale>();
+
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
@@ -63,6 +67,28 @@ public class SupermarketContext(DbContextOptions<SupermarketContext> options) : 
             entity.Property(u => u.FullName).HasMaxLength(150).IsRequired();
             entity.Property(u => u.PasswordHash).IsRequired();
             entity.HasIndex(u => u.Email).IsUnique();
+        });
+
+        // Las ventas son registros históricos: ningún dato maestro con ventas puede borrarse.
+        modelBuilder.Entity<Sale>(entity =>
+        {
+            entity.Property(s => s.Total).HasPrecision(18, 2);
+            entity.Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
+            entity.HasIndex(s => s.CreatedAtUtc);
+
+            entity.HasOne(s => s.Customer).WithMany().HasForeignKey(s => s.CustomerId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.PayMode).WithMany().HasForeignKey(s => s.PayModeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.User).WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SaleItem>(entity =>
+        {
+            entity.Property(i => i.ProductName).HasMaxLength(150).IsRequired();
+            entity.Property(i => i.UnitPrice).HasPrecision(18, 2);
+            entity.Ignore(i => i.Subtotal);
+
+            entity.HasOne(i => i.Sale).WithMany(s => s.Items).HasForeignKey(i => i.SaleId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(i => i.Product).WithMany().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
