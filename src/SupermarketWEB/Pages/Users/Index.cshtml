@@ -31,7 +31,7 @@
                     <td>
                         @if (user.Id == Model.CurrentUserId)
                         {
-                            <span class="badge bg-secondary">@SupermarketWEB.Pages.Users.IndexModel.RoleName(user.Role) (tú)</span>
+                            <span class="badge bg-secondary">@DisplayFormat.RoleName(user.Role) (tú)</span>
                         }
                         else
                         {
@@ -39,7 +39,7 @@
                                 <select name="role" class="form-select form-select-sm w-auto" aria-label="Rol de @user.FullName">
                                     @foreach (var role in Enum.GetValues<UserRole>())
                                     {
-                                        <option value="@role" selected="@(role == user.Role)">@SupermarketWEB.Pages.Users.IndexModel.RoleName(role)</option>
+                                        <option value="@role" selected="@(role == user.Role)">@DisplayFormat.RoleName(role)</option>
                                     }
                                 </select>
                                 <button type="submit" class="btn btn-sm btn-outline-primary">Guardar</button>

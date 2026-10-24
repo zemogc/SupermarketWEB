@@ -45,10 +45,10 @@
                             }
                         </ul>
                         <form method="post" asp-page="/Account/Logout" class="d-flex align-items-center gap-2">
-                            <span class="navbar-text small">
+                            <a asp-page="/Account/Manage" class="navbar-text small text-white text-decoration-none" title="Mi cuenta">
                                 @User.Identity.Name
                                 <span class="badge bg-light text-success ms-1">@(isAdmin ? "Admin" : "Cajero")</span>
-                            </span>
+                            </a>
                             <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
                         </form>
                     }
