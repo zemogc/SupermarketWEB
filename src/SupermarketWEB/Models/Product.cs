@@ -13,7 +13,7 @@ public class Product
     [Display(Name = "Nombre")]
     public string Name { get; set; } = string.Empty;
 
-    [Range(typeof(decimal), "0.01", "100000000", ErrorMessage = "El precio debe estar entre {1} y {2}.")]
+    [Range(typeof(decimal), "0.01", "100000000", ParseLimitsInInvariantCulture = true, ConvertValueInInvariantCulture = true, ErrorMessage = "El precio debe estar entre {1} y {2}.")]
     [DataType(DataType.Currency)]
     [Display(Name = "Precio")]
     public decimal Price { get; set; }
