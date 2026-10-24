@@ -1,4 +1,5 @@
 using System.Globalization;
+using SupermarketWEB.Models;
 
 namespace SupermarketWEB.Infrastructure;
 
@@ -21,4 +22,10 @@ public static class DisplayFormat
     public static string DateTime(DateTime value) => value.ToString("dd/MM/yyyy HH:mm", DisplayCulture);
 
     public static string SaleNumber(int id) => id.ToString("D6", DisplayCulture);
+
+    public static string RoleName(UserRole role) => role switch
+    {
+        UserRole.Admin => "Administrador",
+        _ => "Cajero",
+    };
 }

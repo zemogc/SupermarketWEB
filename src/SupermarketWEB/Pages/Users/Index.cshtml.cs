@@ -45,15 +45,9 @@ public class IndexModel(SupermarketContext context, TimeProvider timeProvider) :
             await context.SaveChangesAsync();
         }
 
-        TempData["StatusMessage"] = $"{user.FullName} ahora es {RoleName(role).ToLowerInvariant()}.";
+        TempData["StatusMessage"] = $"{user.FullName} ahora es {DisplayFormat.RoleName(role).ToLowerInvariant()}.";
         return RedirectToPage();
     }
 
     public DateTime ToLocal(DateTime utc) => timeProvider.ToLocal(utc);
-
-    public static string RoleName(UserRole role) => role switch
-    {
-        UserRole.Admin => "Administrador",
-        _ => "Cajero",
-    };
 }
