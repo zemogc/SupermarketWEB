@@ -1,0 +1,48 @@
+@model SupermarketWEB.Models.Customer
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="mb-3">
+    <label asp-for="DocumentNumber" class="form-label"></label>
+    <input asp-for="DocumentNumber" class="form-control" autofocus />
+    <span asp-validation-for="DocumentNumber" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-sm-6 mb-3">
+        <label asp-for="FirstName" class="form-label"></label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+    <div class="col-sm-6 mb-3">
+        <label asp-for="LastName" class="form-label"></label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-6 mb-3">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+    <div class="col-sm-6 mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-8 mb-3">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+    <div class="col-sm-4 mb-3">
+        <label asp-for="Birthday" class="form-label"></label>
+        <input asp-for="Birthday" class="form-control" />
+        <span asp-validation-for="Birthday" class="text-danger"></span>
+    </div>
+</div>

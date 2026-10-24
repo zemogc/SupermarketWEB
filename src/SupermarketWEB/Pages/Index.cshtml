@@ -1,0 +1,74 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<h1 class="h2 mb-4">Hola, @User.Identity?.Name</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <a asp-page="/Products/Index" class="card stat-card h-100 text-decoration-none">
+            <div class="card-body">
+                <div class="text-muted small">Productos</div>
+                <div class="fs-2 fw-semibold">@DisplayFormat.Number(Model.ProductCount)</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a asp-page="/Categories/Index" class="card stat-card h-100 text-decoration-none">
+            <div class="card-body">
+                <div class="text-muted small">Categorías</div>
+                <div class="fs-2 fw-semibold">@DisplayFormat.Number(Model.CategoryCount)</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a asp-page="/Customers/Index" class="card stat-card h-100 text-decoration-none">
+            <div class="card-body">
+                <div class="text-muted small">Clientes</div>
+                <div class="fs-2 fw-semibold">@DisplayFormat.Number(Model.CustomerCount)</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Valor del inventario</div>
+                <div class="fs-2 fw-semibold">@DisplayFormat.Currency(Model.InventoryValue)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Productos con stock bajo</span>
+        @if (Model.OutOfStockCount > 0)
+        {
+            <span class="badge bg-danger">@Model.OutOfStockCount agotado(s)</span>
+        }
+    </div>
+    @if (Model.LowStockProducts.Count == 0)
+    {
+        <div class="card-body text-muted">Todo el inventario está por encima del mínimo.</div>
+    }
+    else
+    {
+        <ul class="list-group list-group-flush">
+            @foreach (var product in Model.LowStockProducts)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        <a asp-page="/Products/Edit" asp-route-id="@product.Id">@product.Name</a>
+                        <span class="text-muted small">· @product.Category?.Name</span>
+                    </span>
+                    <span class="badge @(product.Stock == 0 ? "bg-danger" : "bg-warning text-dark")">@product.Stock</span>
+                </li>
+            }
+        </ul>
+        <div class="card-footer text-end">
+            <a asp-page="/Products/Index" asp-route-lowStock="true">Ver todos</a>
+        </div>
+    }
+</div>
