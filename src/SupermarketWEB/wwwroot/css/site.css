@@ -33,3 +33,22 @@ body {
 a.stat-card:hover {
   box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .1);
 }
+
+.sale-quantity {
+  width: 9rem;
+}
+
+.receipt {
+  max-width: 52rem;
+}
+
+@media print {
+  header, footer, .alert {
+    display: none !important;
+  }
+
+  .receipt {
+    border: 0;
+    max-width: none;
+  }
+}

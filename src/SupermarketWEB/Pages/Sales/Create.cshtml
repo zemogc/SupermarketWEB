@@ -1,0 +1,110 @@
+@page
+@using System.Globalization
+@model SupermarketWEB.Pages.Sales.CreateModel
+@{
+    ViewData["Title"] = "Nueva venta";
+}
+
+@functions {
+    // Una fila de producto. El índice "__index__" se usa en la plantilla que clona sales.js.
+    private async Task LineRow(string index, SupermarketWEB.Pages.Sales.CreateModel.LineInput line)
+    {
+        var prefix = $"Input.Lines[{index}]";
+        <tr data-line>
+            <td>
+                <select name="@(prefix).ProductId" class="form-select" data-product aria-label="Producto">
+                    <option value="">Selecciona un producto</option>
+                    @foreach (var product in Model.Products)
+                    {
+                        <option value="@product.Id"
+                                data-price="@product.Price.ToString(CultureInfo.InvariantCulture)"
+                                selected="@(product.Id == line.ProductId)">
+                            @product.Name · @DisplayFormat.Currency(product.Price) · stock @product.Stock
+                        </option>
+                    }
+                </select>
+            </td>
+            <td class="sale-quantity">
+                <input type="number" name="@(prefix).Quantity" value="@line.Quantity" min="1" max="10000" step="1"
+                       class="form-control" data-quantity aria-label="Cantidad" />
+                @Html.ValidationMessage($"{prefix}.Quantity", null, new { @class = "text-danger small" })
+            </td>
+            <td class="text-end align-middle" data-subtotal>—</td>
+            <td class="text-end align-middle">
+                <button type="button" class="btn btn-outline-danger btn-sm" data-remove-line aria-label="Quitar producto">Quitar</button>
+            </td>
+        </tr>
+    }
+}
+
+<h1 class="h2 mb-4">@ViewData["Title"]</h1>
+
+@if (Model.Products.Count == 0)
+{
+    <div class="alert alert-warning">
+        No hay productos con stock disponible. <a asp-page="/Products/Index">Revisa el inventario</a>.
+    </div>
+}
+else
+{
+    <form method="post" data-sale-form>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Input.CustomerId" class="form-label"></label>
+                <select asp-for="Input.CustomerId" asp-items="Model.CustomerOptions" class="form-select">
+                    <option value="">Consumidor final</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Input.PayModeId" class="form-label"></label>
+                <select asp-for="Input.PayModeId" asp-items="Model.PayModeOptions" class="form-select">
+                    <option value="">Selecciona un medio de pago</option>
+                </select>
+                <span asp-validation-for="Input.PayModeId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th class="text-end">Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody data-lines>
+                    @for (var i = 0; i < Model.Input.Lines.Count; i++)
+                    {
+                        await LineRow(i.ToString(CultureInfo.InvariantCulture), Model.Input.Lines[i]);
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-add-line>Agregar producto</button>
+                        </td>
+                        <td class="text-end fw-semibold">Total: <span data-total>—</span></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <p class="text-muted small">El total definitivo se calcula con los precios vigentes al registrar la venta.</p>
+
+        <button type="submit" class="btn btn-success">Registrar venta</button>
+        <a asp-page="Index" class="btn btn-link">Cancelar</a>
+    </form>
+
+    <template id="sale-line-template">
+        @{ await LineRow("__index__", new SupermarketWEB.Pages.Sales.CreateModel.LineInput()); }
+    </template>
+}
+
+@section Scripts {
+    <script src="~/js/sales.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,92 @@
+@page "{id:int}"
+@using SupermarketWEB.Models
+@model SupermarketWEB.Pages.Sales.DetailsModel
+@{
+    ViewData["Title"] = $"Venta N.º {DisplayFormat.SaleNumber(Model.Sale.Id)}";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 d-print-none">
+    <a asp-page="Index" class="btn btn-link px-0">&larr; Volver a ventas</a>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-print>Imprimir</button>
+        @if (Model.Sale.Status == SaleStatus.Completed)
+        {
+            <form method="post" asp-page-handler="Cancel"
+                  data-confirm="¿Anular esta venta? El stock de sus productos volverá al inventario.">
+                <button type="submit" class="btn btn-outline-danger">Anular venta</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card receipt">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+                <div class="text-muted">@DisplayFormat.DateTime(Model.CreatedAtLocal)</div>
+            </div>
+            @if (Model.Sale.Status == SaleStatus.Cancelled)
+            {
+                <span class="badge bg-danger fs-6">Anulada</span>
+            }
+            else
+            {
+                <span class="badge bg-success fs-6">Completada</span>
+            }
+        </div>
+
+        <dl class="row mb-4">
+            <dt class="col-sm-3">Cliente</dt>
+            <dd class="col-sm-9">
+                @if (Model.Sale.Customer is { } customer)
+                {
+                    @customer.FullName <span class="text-muted">· @customer.DocumentNumber</span>
+                }
+                else
+                {
+                    <span>Consumidor final</span>
+                }
+            </dd>
+            <dt class="col-sm-3">Medio de pago</dt>
+            <dd class="col-sm-9">@Model.Sale.PayMode?.Name</dd>
+            <dt class="col-sm-3">Atendió</dt>
+            <dd class="col-sm-9">@Model.Sale.User?.FullName</dd>
+            @if (Model.CancelledAtLocal is { } cancelledAt)
+            {
+                <dt class="col-sm-3">Anulada el</dt>
+                <dd class="col-sm-9">@DisplayFormat.DateTime(cancelledAt)</dd>
+            }
+        </dl>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Producto</th>
+                        <th class="text-end">Cantidad</th>
+                        <th class="text-end">Precio unitario</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Sale.Items.OrderBy(i => i.ProductName))
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td class="text-end">@item.Quantity</td>
+                            <td class="text-end">@DisplayFormat.Currency(item.UnitPrice)</td>
+                            <td class="text-end">@DisplayFormat.Currency(item.Subtotal)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-end">Total</th>
+                        <th class="text-end fs-5">@DisplayFormat.Currency(Model.Sale.Total)</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
