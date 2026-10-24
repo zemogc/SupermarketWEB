@@ -7,10 +7,11 @@ Aplicación web para la gestión de un supermercado construida con **ASP.NET Cor
 - **Autenticación** con cookies: registro, inicio y cierre de sesión. Todas las páginas requieren sesión salvo las públicas.
 - **Roles** de administrador y cajero, con administración de usuarios. Un cambio de rol se aplica de inmediato y cierra las sesiones abiertas del usuario.
 - **Ventas**: registro con varios productos, cliente opcional (consumidor final) y medio de pago; descuento automático del stock, comprobante imprimible, anulación con devolución del inventario e historial filtrable por fechas.
+- **Inventario (kardex)**: cada cambio de stock queda registrado con su tipo (saldo inicial, entrada, ajuste, venta o anulación), usuario, motivo y saldo resultante. Entradas de mercancía y ajustes por conteo físico con motivo obligatorio.
 - **Reportes** (administradores): ingresos, ticket promedio, ventas por día, productos más vendidos y desglose por medio de pago para cualquier rango de fechas, con exportación del detalle a CSV.
 - **Panel de inicio** con ventas del día, últimas ventas, valor del inventario y productos con stock bajo o agotados.
 - **Categorías**: CRUD con búsqueda, nombre único y bloqueo del borrado si tienen productos asociados. Productos, clientes y medios de pago con ventas tampoco pueden eliminarse, para conservar el historial.
-- **Productos**: CRUD con paginación, búsqueda, filtro por categoría y por stock bajo.
+- **Productos**: CRUD con paginación, búsqueda, filtro por categoría y por stock bajo. El stock no se edita a mano: cambia solo con movimientos de inventario.
 - **Clientes**: CRUD con paginación, búsqueda por documento, nombre o correo y documento único.
 - **Medios de pago**: CRUD con nombre único.
 - Interfaz en español, responsiva (Bootstrap 5) y con validación en cliente y servidor.
@@ -58,6 +59,7 @@ También puedes crear tu propia cuenta desde **Registrarse**: entrará como caje
 | Categorías y medios de pago | | ✔ |
 | Administrar usuarios y roles | | ✔ |
 | Reportes y exportación CSV | | ✔ |
+| Entradas, ajustes e historial de inventario | | ✔ |
 
 ### Con Docker
 
@@ -86,7 +88,7 @@ SupermarketWEB/
 │   ├── Infrastructure/    # Paginación, formato, seguridad y utilidades transversales
 │   ├── Models/            # Entidades del dominio con sus validaciones
 │   ├── Pages/             # Razor Pages agrupadas por módulo
-│   ├── Services/          # Lógica de negocio que abarca varias entidades (ventas, reportes)
+│   ├── Services/          # Lógica de negocio que abarca varias entidades (ventas, inventario, reportes)
 │   └── wwwroot/           # Recursos estáticos
 └── tests/SupermarketWEB.Tests/
     ├── Infrastructure/    # WebApplicationFactory y helpers de HTTP
@@ -103,6 +105,15 @@ erDiagram
     CUSTOMER |o--o{ SALE : realiza
     PAYMODE ||--o{ SALE : "se paga con"
     USER ||--o{ SALE : registra
+    PRODUCT ||--o{ STOCK_MOVEMENT : registra
+    SALE |o--o{ STOCK_MOVEMENT : origina
+    STOCK_MOVEMENT {
+        int Id
+        string Type "Initial | Receipt | Adjustment | Sale | SaleCancellation"
+        int Quantity "positiva o negativa"
+        int StockAfter
+        string Note
+    }
     SALE {
         int Id
         datetime CreatedAtUtc
@@ -152,6 +163,7 @@ erDiagram
 
 - **Razor Pages con el `DbContext` en cada página.** Para un CRUD de este tamaño evita capas sin lógica propia; las reglas compartidas viven en clases base por módulo (`ProductFormPageModel`, `CustomerFormPageModel`…).
 - **Servicio de ventas.** Registrar una venta toca varias tablas, así que vive en `SaleService` y no en la página. Corre dentro de una transacción y descuenta el stock con un `UPDATE ... WHERE Stock >= cantidad`: si dos cajas venden el último producto al mismo tiempo, solo una lo logra y la otra se revierte completa, sin dejar stock negativo. Hay una prueba que simula esa carrera.
+- **El stock solo cambia mediante movimientos.** `InventoryService` es el único punto que modifica el stock y siempre deja un `StockMovement`, de modo que la suma de movimientos de un producto es igual a su stock (hay una prueba de ese invariante). Los ajustes por conteo usan concurrencia optimista: si se vendió algo mientras se contaba, el ajuste se rechaza en lugar de borrar esa venta del inventario.
 - **Ventas como registro histórico.** Cada línea guarda el nombre y el precio vigentes al vender, así el comprobante no cambia si después se edita el producto. Las ventas se anulan, no se borran.
 - **Exportación CSV segura.** Sigue RFC 4180, incluye BOM UTF-8 para que Excel muestre bien las tildes y antepone `'` a los textos que empiezan con `=`, `+`, `-` o `@`, para evitar la inyección de fórmulas al abrir el archivo.
 - **Fechas en UTC, días en hora local.** Las ventas se guardan en UTC y los filtros y reportes agrupan por el día local del servidor; `TimeProvider` permite probar esos límites con una zona horaria fija.

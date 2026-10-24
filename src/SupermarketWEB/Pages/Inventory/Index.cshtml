@@ -1,0 +1,89 @@
+@page
+@using SupermarketWEB.Models
+@model SupermarketWEB.Pages.Inventory.IndexModel
+@{
+    ViewData["Title"] = "Movimientos de inventario";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">@ViewData["Title"]</h1>
+    <div class="d-flex gap-2">
+        <a asp-page="Receive" asp-route-productId="@Model.ProductId" class="btn btn-success">Registrar entrada</a>
+        <a asp-page="Adjust" asp-route-productId="@Model.ProductId" class="btn btn-outline-secondary">Ajustar por conteo</a>
+    </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4">
+        <label asp-for="ProductId" class="form-label small">Producto</label>
+        <select asp-for="ProductId" asp-items="Model.ProductOptions" class="form-select">
+            <option value="">Todos los productos</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Type" class="form-label small">Tipo</label>
+        <select asp-for="Type" class="form-select">
+            <option value="">Todos los tipos</option>
+            @foreach (var type in Enum.GetValues<StockMovementType>())
+            {
+                <option value="@type" selected="@(type == Model.Type)">@SupermarketWEB.Pages.Inventory.IndexModel.TypeName(type)</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a asp-page="Index" class="btn btn-link">Limpiar</a>
+    </div>
+</form>
+
+@if (Model.Movements.TotalCount == 0)
+{
+    <p class="text-muted">No hay movimientos para los filtros seleccionados.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Cantidad</th>
+                    <th class="text-end">Saldo</th>
+                    <th>Detalle</th>
+                    <th>Usuario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var movement in Model.Movements.Items)
+                {
+                    <tr>
+                        <td class="text-nowrap">@DisplayFormat.DateTime(Model.ToLocal(movement.CreatedAtUtc))</td>
+                        <td>
+                            <a asp-page="Index" asp-route-productId="@movement.ProductId">@movement.ProductName</a>
+                        </td>
+                        <td>@SupermarketWEB.Pages.Inventory.IndexModel.TypeName(movement.Type)</td>
+                        <td class="text-end fw-semibold @(movement.Quantity < 0 ? "text-danger" : "text-success")">
+                            @(movement.Quantity > 0 ? "+" : null)@movement.Quantity
+                        </td>
+                        <td class="text-end">@movement.StockAfter</td>
+                        <td>
+                            @if (movement.SaleId is { } saleId)
+                            {
+                                <a asp-page="/Sales/Details" asp-route-id="@saleId">Venta N.º @DisplayFormat.SaleNumber(saleId)</a>
+                            }
+                            else
+                            {
+                                @movement.Note
+                            }
+                        </td>
+                        <td>@(movement.UserName ?? "Sistema")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="_Pager" model="(Model.Movements.PageNumber, Model.Movements.TotalPages, Model.Movements.TotalCount)" />
+}
