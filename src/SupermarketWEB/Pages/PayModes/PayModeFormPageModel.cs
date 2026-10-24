@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using SupermarketWEB.Data;
+using SupermarketWEB.Infrastructure;
 using SupermarketWEB.Models;
 
 namespace SupermarketWEB.Pages.PayModes;
@@ -26,7 +26,9 @@ public abstract class PayModeFormPageModel(SupermarketContext context) : PageMod
         payMode.Name = payMode.Name.Trim();
 
         var duplicated = await Context.PayModes
-            .AnyAsync(p => p.Id != payMode.Id && p.Name.ToLower() == payMode.Name.ToLower());
+            .Where(p => p.Id != payMode.Id)
+            .Select(p => p.Name)
+            .ContainsIgnoringCaseAsync(payMode.Name);
 
         if (duplicated)
         {

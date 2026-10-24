@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SupermarketWEB.Data;
+using SupermarketWEB.Infrastructure;
 using SupermarketWEB.Models;
 
 namespace SupermarketWEB.Pages.Categories;
@@ -38,7 +39,7 @@ public class EditModel(SupermarketContext context) : PageModel
 
         category.Name = category.Name.Trim();
 
-        if (await context.Categories.AnyAsync(c => c.Id != id && c.Name.ToLower() == category.Name.ToLower()))
+        if (await context.Categories.Where(c => c.Id != id).Select(c => c.Name).ContainsIgnoringCaseAsync(category.Name))
         {
             ModelState.AddModelError("Category.Name", "Ya existe una categoría con este nombre.");
             return Page();
