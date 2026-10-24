@@ -1,12 +1,13 @@
 # SupermarketWEB
 
-Aplicación web para la gestión de un supermercado construida con **ASP.NET Core Razor Pages (.NET 10)** y **Entity Framework Core**. Permite administrar categorías, productos, clientes y medios de pago, con autenticación de usuarios y un panel con indicadores del inventario.
+Aplicación web para la gestión de un supermercado construida con **ASP.NET Core Razor Pages (.NET 10)** y **Entity Framework Core**. Permite registrar ventas con control de inventario y administrar categorías, productos, clientes y medios de pago, con autenticación de usuarios y un panel con indicadores del negocio.
 
 ## Funcionalidades
 
 - **Autenticación** con cookies: registro, inicio y cierre de sesión. Todas las páginas requieren sesión salvo las públicas.
-- **Panel de inicio** con totales, valor del inventario y productos con stock bajo o agotados.
-- **Categorías**: CRUD con búsqueda, nombre único y bloqueo del borrado si tienen productos asociados.
+- **Ventas**: registro con varios productos, cliente opcional (consumidor final) y medio de pago; descuento automático del stock, comprobante imprimible, anulación con devolución del inventario e historial filtrable por fechas.
+- **Panel de inicio** con ventas del día, últimas ventas, valor del inventario y productos con stock bajo o agotados.
+- **Categorías**: CRUD con búsqueda, nombre único y bloqueo del borrado si tienen productos asociados. Productos, clientes y medios de pago con ventas tampoco pueden eliminarse, para conservar el historial.
 - **Productos**: CRUD con paginación, búsqueda, filtro por categoría y por stock bajo.
 - **Clientes**: CRUD con paginación, búsqueda por documento, nombre o correo y documento único.
 - **Medios de pago**: CRUD con nombre único.
@@ -58,6 +59,7 @@ SupermarketWEB/
 │   ├── Infrastructure/    # Paginación, formato, seguridad y utilidades transversales
 │   ├── Models/            # Entidades del dominio con sus validaciones
 │   ├── Pages/             # Razor Pages agrupadas por módulo
+│   ├── Services/          # Lógica de negocio que abarca varias entidades (ventas)
 │   └── wwwroot/           # Recursos estáticos
 └── tests/SupermarketWEB.Tests/
     ├── Infrastructure/    # WebApplicationFactory y helpers de HTTP
@@ -69,6 +71,23 @@ SupermarketWEB/
 ```mermaid
 erDiagram
     CATEGORY ||--o{ PRODUCT : contiene
+    SALE ||--|{ SALE_ITEM : incluye
+    PRODUCT ||--o{ SALE_ITEM : "se vende en"
+    CUSTOMER |o--o{ SALE : realiza
+    PAYMODE ||--o{ SALE : "se paga con"
+    USER ||--o{ SALE : registra
+    SALE {
+        int Id
+        datetime CreatedAtUtc
+        string Status "Completed | Cancelled"
+        decimal Total
+    }
+    SALE_ITEM {
+        int Id
+        string ProductName "copia al vender"
+        decimal UnitPrice "copia al vender"
+        int Quantity
+    }
     CATEGORY {
         int Id
         string Name "único"
@@ -105,6 +124,8 @@ erDiagram
 ## Decisiones de diseño
 
 - **Razor Pages con el `DbContext` en cada página.** Para un CRUD de este tamaño evita capas sin lógica propia; las reglas compartidas viven en clases base por módulo (`ProductFormPageModel`, `CustomerFormPageModel`…).
+- **Servicio de ventas.** Registrar una venta toca varias tablas, así que vive en `SaleService` y no en la página. Corre dentro de una transacción y descuenta el stock con un `UPDATE ... WHERE Stock >= cantidad`: si dos cajas venden el último producto al mismo tiempo, solo una lo logra y la otra se revierte completa, sin dejar stock negativo. Hay una prueba que simula esa carrera.
+- **Ventas como registro histórico.** Cada línea guarda el nombre y el precio vigentes al vender, así el comprobante no cambia si después se edita el producto. Las ventas se anulan, no se borran.
 - **Protección contra overposting.** Los formularios usan `TryUpdateModelAsync` con la lista explícita de campos editables.
 - **Seguridad por defecto.** Política de autorización global, validación de `ReturnUrl`, cierre de sesión solo por POST, contraseñas con hash, límite de intentos por IP en login/registro, cabeceras `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y `Content-Security-Policy` fuera de desarrollo.
 - **Cultura.** El binding usa la cultura invariante para que los decimales funcionen igual en cualquier servidor; el formato colombiano (`es-CO`) se aplica solo al mostrar valores.
