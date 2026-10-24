@@ -51,6 +51,7 @@ public static class DemoDataSeeder
         var cashier = await EnsureCashierAsync(context, passwordHasher, openingUtc);
         await EnsureCustomersAsync(context);
 
+        var supplierIds = await EnsureSuppliersAsync(context);
         var customerIds = await context.Customers.Select(c => c.Id).ToListAsync();
         var payModeIds = await context.PayModes.OrderBy(p => p.Id).Select(p => p.Id).ToListAsync();
 
@@ -58,14 +59,20 @@ public static class DemoDataSeeder
         // dejan escasos a propósito para que el panel muestre alertas de stock.
         var restocked = await context.Products
             .Where(p => p.Name != "Tomate (kg)" && p.Name != "Yogur natural")
-            .Select(p => p.Id)
+            .Select(p => new { p.Id, p.Price })
             .ToListAsync();
 
+        // Cada producto se compra a un proveedor fijo con un costo entre el 62 % y el 78 % del precio.
+        var purchaseTerms = restocked.ToDictionary(
+            p => p.Id,
+            p => (SupplierId: supplierIds[random.Next(supplierIds.Count)], Cost: Math.Round(p.Price * (decimal)(0.62 + random.NextDouble() * 0.16), 0)));
+
         var purchaseTime = At(timeProvider, firstDay.AddDays(-1), hour: 7);
-        foreach (var productId in restocked)
+        foreach (var product in restocked)
         {
-            var inventory = new InventoryService(context, purchaseTime);
-            await inventory.ReceiveAsync(productId, random.Next(90, 140), "Pedido inicial a proveedores", admin.Id);
+            var (supplierId, cost) = purchaseTerms[product.Id];
+            await new InventoryService(context, purchaseTime)
+                .ReceiveAsync(product.Id, random.Next(90, 140), "Pedido inicial", admin.Id, supplierId, cost);
         }
 
         // Todo se registra en orden cronológico, para que el saldo de cada movimiento
@@ -121,9 +128,12 @@ public static class DemoDataSeeder
             if (day == firstDay.AddDays(Days / 2))
             {
                 var restockTime = At(timeProvider, day, hour: 21);
-                foreach (var productId in restocked.Where((_, index) => index % 2 == 0))
+                foreach (var product in restocked.Where((_, index) => index % 2 == 0))
                 {
-                    await new InventoryService(context, restockTime).ReceiveAsync(productId, 40, "Reposición quincenal", admin.Id);
+                    // El proveedor subió un 4 % el precio: el costo promedio refleja la mezcla.
+                    var (supplierId, cost) = purchaseTerms[product.Id];
+                    await new InventoryService(context, restockTime)
+                        .ReceiveAsync(product.Id, 40, "Reposición quincenal", admin.Id, supplierId, Math.Round(cost * 1.04m, 0));
                 }
             }
 
@@ -167,6 +177,22 @@ public static class DemoDataSeeder
         context.Users.Add(cashier);
         await context.SaveChangesAsync();
         return cashier;
+    }
+
+    private static async Task<List<int>> EnsureSuppliersAsync(SupermarketContext context)
+    {
+        Supplier[] suppliers =
+        [
+            new() { Name = "Distribuidora Andina", TaxId = "900123456-1", ContactName = "Jorge Pardo", Phone = "6015550100", Email = "ventas@andina.example.com" },
+            new() { Name = "Lácteos del Valle", TaxId = "900654321-2", ContactName = "Marcela Ortiz", Phone = "6025550101" },
+            new() { Name = "Comercializadora La Cosecha", TaxId = "901112223-3", ContactName = "Pedro Salas", Email = "pedidos@lacosecha.example.com" },
+        ];
+
+        var existing = await context.Suppliers.Select(s => s.Name).ToListAsync();
+        context.Suppliers.AddRange(suppliers.Where(s => !existing.Contains(s.Name)));
+        await context.SaveChangesAsync();
+
+        return await context.Suppliers.OrderBy(s => s.Id).Select(s => s.Id).ToListAsync();
     }
 
     private static async Task EnsureCustomersAsync(SupermarketContext context)
