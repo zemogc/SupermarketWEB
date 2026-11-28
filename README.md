@@ -1,5 +1,6 @@
 # SupermarketWEB
 
+[![CI](https://github.com/zemogc/SupermarketWEB/actions/workflows/ci.yml/badge.svg)](https://github.com/zemogc/SupermarketWEB/actions/workflows/ci.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![ASP.NET Core Razor Pages](https://img.shields.io/badge/ASP.NET%20Core-Razor%20Pages-512BD4)
 ![EF Core + SQLite](https://img.shields.io/badge/EF%20Core-SQLite-003B57?logo=sqlite&logoColor=white)
